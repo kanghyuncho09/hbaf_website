@@ -160,6 +160,47 @@ app.post("/api/driving-logs", (req, res) => {
   res.status(201).json(record);
 });
 
+app.put("/api/driving-logs/:id", requireAdmin, (req, res) => {
+  const {
+    vehicleId, vehicleName, driver, dept,
+    departure, destination, startOdo, endOdo, passengers, notes,
+  } = req.body;
+  if (!vehicleId || !driver || !departure || !destination || startOdo == null || endOdo == null) {
+    return res.status(400).json({ error: "필수 항목이 누락되었습니다." });
+  }
+  const updated = db.updateInList("driving-logs", req.params.id, {
+    vehicleId, vehicleName, driver, dept,
+    departure, destination, startOdo, endOdo, passengers, notes,
+  });
+  res.status(updated ? 200 : 404).json(updated || { error: "운행일지를 찾을 수 없습니다." });
+});
+
+app.delete("/api/driving-logs/:id", requireAdmin, (req, res) => {
+  const ok = db.removeFromList("driving-logs", req.params.id);
+  res.status(ok ? 200 : 404).json({ ok });
+});
+
+app.get("/api/driving-logs/export/csv", requireAdmin, (req, res) => {
+  const logs = db.readList("driving-logs").sort((a, b) => b.id - a.id);
+  const header = [
+    "작성일시", "차량", "운전자", "부서", "출발지", "도착지",
+    "출발계기판(km)", "도착계기판(km)", "주행거리(km)", "동승자", "특이사항",
+  ];
+  const escapeCsv = (value) => {
+    const s = String(value ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const rows = logs.map((l) => [
+    new Date(l.createdAt).toLocaleString("ko-KR"),
+    l.vehicleName, l.driver, l.dept || "", l.departure, l.destination,
+    l.startOdo, l.endOdo, l.endOdo - l.startOdo, l.passengers || "", l.notes || "",
+  ]);
+  const csv = [header, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\r\n");
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="driving-logs.csv"`);
+  res.send("﻿" + csv);
+});
+
 // ---------- 점심 메뉴 (룰렛) ----------
 app.get("/api/lunch-menu", (req, res) => {
   res.json(db.readList("lunch-menu"));

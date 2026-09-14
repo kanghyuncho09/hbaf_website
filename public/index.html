@@ -250,7 +250,10 @@
           <button type="submit" class="btn">운행일지 제출</button>
         </form>
 
-        <h2 style="margin-top:30px;">최근 운행일지</h2>
+        <div class="panel-head" style="margin-top:30px;">
+          <h2 id="vehLogListTitle">최근 운행일지</h2>
+          <button type="button" class="btn btn--sm btn--outline" id="vehLogExportBtn" style="display:none;">📥 엑셀(CSV) 다운로드</button>
+        </div>
         <ul id="vehLogList" class="log-list"></ul>
       </section>
     </div>

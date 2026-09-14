@@ -165,28 +165,200 @@
     });
   }
 
+  let allLogs = [];
+
   async function loadLogs() {
     const res = await fetch("/api/driving-logs");
-    const all = await res.json();
-    const recent = all.sort((a, b) => b.id - a.id).slice(0, 10);
+    allLogs = await res.json();
+    renderLogs();
+  }
+
+  function renderLogs() {
+    const admin = isAdmin();
+    document.getElementById("vehLogListTitle").textContent = admin ? "전체 운행일지 (관리자)" : "최근 운행일지";
+    document.getElementById("vehLogExportBtn").style.display = admin ? "" : "none";
+
+    const sorted = [...allLogs].sort((a, b) => b.id - a.id);
+    const list = admin ? sorted : sorted.slice(0, 10);
     const ul = document.getElementById("vehLogList");
-    if (!recent.length) {
+    if (!list.length) {
       ul.innerHTML = `<li class="empty-state">작성된 운행일지가 없습니다.</li>`;
       return;
     }
-    ul.innerHTML = recent
-      .map(
-        (l) => `
-        <li>
-          <div class="log-head">${l.vehicleName} · ${l.driver}${l.dept ? " (" + l.dept + ")" : ""}</div>
-          <div class="log-body">
-            ${l.departure} → ${l.destination} · 주행거리 ${l.endOdo - l.startOdo}km
-            ${l.passengers ? ` · 동승자: ${l.passengers}` : ""}
-            ${l.notes ? `<br />특이사항: ${l.notes}` : ""}
-          </div>
-        </li>`
-      )
+    ul.innerHTML = list.map((l) => renderLogItem(l, admin)).join("");
+    if (!admin) return;
+
+    ul.querySelectorAll("[data-delete-log]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("이 운행일지를 삭제하시겠습니까?")) return;
+        const res = await fetch(`/api/driving-logs/${btn.dataset.deleteLog}`, {
+          method: "DELETE",
+          headers: adminHeaders(),
+        });
+        if (!res.ok) {
+          alert("삭제 권한이 없거나 실패했습니다.");
+          return;
+        }
+        loadLogs();
+      });
+    });
+
+    ul.querySelectorAll("[data-edit-log]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const li = ul.querySelector(`li[data-log-id="${btn.dataset.editLog}"]`);
+        li.querySelector(".log-view").hidden = true;
+        li.querySelector(".log-edit-form").hidden = false;
+      });
+    });
+
+    ul.querySelectorAll("[data-cancel-log-edit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const li = ul.querySelector(`li[data-log-id="${btn.dataset.cancelLogEdit}"]`);
+        li.querySelector(".log-view").hidden = false;
+        li.querySelector(".log-edit-form").hidden = true;
+      });
+    });
+
+    ul.querySelectorAll(".log-edit-form").forEach((form) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = form.dataset.editForm;
+        const field = (name) => form.querySelector(`[data-field="${name}"]`).value;
+        const startOdo = Number(field("startOdo"));
+        const endOdo = Number(field("endOdo"));
+        if (endOdo < startOdo) {
+          alert("도착 계기판 수치는 출발 계기판보다 커야 합니다.");
+          return;
+        }
+        const vehicleId = field("vehicleId");
+        const payload = {
+          vehicleId,
+          vehicleName: VEHICLES[vehicleId],
+          driver: field("driver").trim(),
+          dept: field("dept").trim(),
+          passengers: field("passengers").trim(),
+          departure: field("departure").trim(),
+          destination: field("destination").trim(),
+          startOdo,
+          endOdo,
+          notes: field("notes").trim(),
+        };
+        const res = await fetch(`/api/driving-logs/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...adminHeaders() },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          alert("수정 권한이 없거나 실패했습니다.");
+          return;
+        }
+        loadLogs();
+      });
+    });
+  }
+
+  function renderLogItem(l, admin) {
+    const viewHtml = `
+      <div class="log-view">
+        <div class="log-head">${l.vehicleName} · ${l.driver}${l.dept ? " (" + l.dept + ")" : ""}</div>
+        <div class="log-body">
+          ${l.departure} → ${l.destination} · 주행거리 ${l.endOdo - l.startOdo}km
+          ${l.passengers ? ` · 동승자: ${l.passengers}` : ""}
+          ${l.notes ? `<br />특이사항: ${l.notes}` : ""}
+        </div>
+        ${
+          admin
+            ? `<div class="post-admin-actions">
+                <button type="button" class="btn btn--sm btn--outline" data-edit-log="${l.id}">수정</button>
+                <button type="button" class="btn btn--sm btn--outline" data-delete-log="${l.id}">삭제</button>
+              </div>`
+            : ""
+        }
+      </div>`;
+
+    if (!admin) return `<li data-log-id="${l.id}">${viewHtml}</li>`;
+
+    const vehicleOptions = Object.entries(VEHICLES)
+      .map(([id, name]) => `<option value="${id}" ${id === l.vehicleId ? "selected" : ""}>${name}</option>`)
       .join("");
+
+    return `
+      <li data-log-id="${l.id}">
+        ${viewHtml}
+        <form class="log-edit-form" data-edit-form="${l.id}" hidden>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>차량</label>
+              <select data-field="vehicleId">${vehicleOptions}</select>
+            </div>
+            <div class="form-row">
+              <label>운전자</label>
+              <input type="text" data-field="driver" value="${escapeHtml(l.driver)}" required />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>부서</label>
+              <input type="text" data-field="dept" value="${escapeHtml(l.dept || "")}" />
+            </div>
+            <div class="form-row">
+              <label>동승자</label>
+              <input type="text" data-field="passengers" value="${escapeHtml(l.passengers || "")}" />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>출발지</label>
+              <input type="text" data-field="departure" value="${escapeHtml(l.departure)}" required />
+            </div>
+            <div class="form-row">
+              <label>도착지</label>
+              <input type="text" data-field="destination" value="${escapeHtml(l.destination)}" required />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>출발 계기판(km)</label>
+              <input type="number" data-field="startOdo" value="${l.startOdo}" required />
+            </div>
+            <div class="form-row">
+              <label>도착 계기판(km)</label>
+              <input type="number" data-field="endOdo" value="${l.endOdo}" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <label>특이사항</label>
+            <textarea data-field="notes" rows="2">${escapeHtml(l.notes || "")}</textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--sm">저장</button>
+            <button type="button" class="btn btn--sm btn--outline" data-cancel-log-edit="${l.id}">취소</button>
+          </div>
+        </form>
+      </li>`;
+  }
+
+  async function exportLogsCsv() {
+    const res = await fetch("/api/driving-logs/export/csv", { headers: adminHeaders() });
+    if (!res.ok) {
+      alert("다운로드 권한이 없거나 실패했습니다.");
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "driving-logs.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str ?? "";
+    return div.innerHTML;
   }
 
   function initControls() {
@@ -289,5 +461,8 @@
     initControls();
     loadReservations();
     loadLogs();
+
+    document.getElementById("vehLogExportBtn").addEventListener("click", exportLogsCsv);
+    document.addEventListener("admin:changed", renderLogs);
   });
 })();
