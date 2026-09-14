@@ -1,7 +1,7 @@
 (function () {
   const VEHICLES = {
-    "car-1": "100오 7594",
     "car-2": "100오 7593",
+    "car-1": "100오 7594",
     "car-3": "395너 5527",
   };
 
@@ -30,7 +30,7 @@
   }
 
   const state = {
-    vehicle: "car-1",
+    vehicle: "car-2",
     date: new Date().toISOString().slice(0, 10),
     reservations: [],
     selStart: null,
