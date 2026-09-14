@@ -1,0 +1,17 @@
+{
+  "name": "hbaf-office-portal",
+  "version": "0.1.0",
+  "description": "HBAF 사내 공용업무 홈페이지 - 회의실/법인차량 예약 및 공지게시판",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

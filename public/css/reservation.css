@@ -1,0 +1,218 @@
+.reservation-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+  align-items: start;
+  padding-bottom: 60px;
+}
+
+.slot-legend {
+  display: flex;
+  gap: 18px;
+  font-size: 13px;
+  color: var(--gray-700);
+  margin: 6px 0 14px;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.dot--available { background: var(--gray-100); border: 2px solid var(--gray-300); }
+.dot--selected { background: var(--yellow); border: 2px solid var(--dark); }
+.dot--booked { background: var(--danger); border: 2px solid var(--danger); }
+
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.slot {
+  padding: 10px 4px;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--gray-300);
+  background: var(--gray-100);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  transition: all 0.1s ease;
+}
+
+.slot:hover:not(.slot--booked) {
+  border-color: var(--yellow-dark);
+  cursor: pointer;
+}
+
+.slot--selected {
+  background: var(--yellow);
+  border-color: var(--dark);
+  color: var(--dark);
+}
+
+.slot--booked {
+  background: #fdecea;
+  border-color: var(--danger);
+  color: var(--danger);
+  cursor: not-allowed;
+}
+
+.slot-hint {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin: 0 0 20px;
+}
+
+.reservation-form {
+  border-top: 1px solid var(--gray-300);
+  padding-top: 18px;
+}
+
+.selected-range {
+  background: var(--gray-100);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.reservation-list h2 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.reservation-items li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 14px;
+}
+
+.reservation-items li:last-child {
+  border-bottom: none;
+}
+
+.reservation-items .r-time {
+  font-weight: 700;
+  min-width: 100px;
+}
+
+.reservation-items .r-meta {
+  flex: 1;
+  color: var(--gray-700);
+}
+
+.reservation-items .r-meta small {
+  display: block;
+  color: var(--gray-500);
+}
+
+.cancel-btn {
+  border: none;
+  background: none;
+  color: var(--gray-500);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .reservation-layout {
+    grid-template-columns: 1fr;
+  }
+  .slot-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ---------- Vehicle specific ---------- */
+.vehicle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.vehicle-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.vehicle-card.active {
+  border-color: var(--yellow);
+}
+
+.vehicle-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.vehicle-card__icon {
+  font-size: 34px;
+}
+
+.vehicle-card h3 {
+  margin: 10px 0 2px;
+  font-size: 17px;
+}
+
+.vehicle-card .plate {
+  color: var(--gray-500);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.log-form {
+  margin-top: 24px;
+  border-top: 1px solid var(--gray-300);
+  padding-top: 18px;
+}
+
+.log-form h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.log-form .required-note {
+  color: var(--danger);
+  font-size: 12px;
+  margin: 0 0 16px;
+}
+
+.log-list li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 13px;
+}
+
+.log-list li:last-child {
+  border-bottom: none;
+}
+
+.log-list .log-head {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.log-list .log-body {
+  color: var(--gray-700);
+}
+
+@media (max-width: 900px) {
+  .vehicle-grid {
+    grid-template-columns: 1fr;
+  }
+}

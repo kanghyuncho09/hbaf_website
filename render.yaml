@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: hbaf-office-portal
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false
+      # 데이터를 재배포/재시작 후에도 유지하고 싶다면 유료 플랜으로 바꾸고
+      # Render 대시보드에서 Disk를 추가한 뒤(mount path 예: /var/data)
+      # 아래 두 줄의 주석을 풀어서 그 경로를 가리키게 하세요.
+      # - key: DATA_DIR
+      #   value: /var/data

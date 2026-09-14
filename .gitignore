@@ -1,0 +1,18 @@
+node_modules/
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# 실행 중 계속 쌓이는 데이터 (git에는 안 남기고, 서버가 최초 실행 시 자동 생성)
+data/meeting-reservations.json
+data/vehicle-reservations.json
+data/driving-logs.json
+data/free-posts.json
+data/song-requests.json
+data/lunch-menu.json
+data/game-scores.json
+data/vet-records.json
+
+# 관리자 비밀번호 (공개 저장소에 절대 커밋하지 않음 — ADMIN_PASSWORD 환경변수 또는
+# 이 로컬 파일로만 관리. 파일이 없으면 서버가 랜덤 비밀번호를 만들어 콘솔에 출력한다)
+data/admin-config.json

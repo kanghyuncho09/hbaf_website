@@ -1,0 +1,254 @@
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  border: 2px solid var(--dark);
+  background: var(--white);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.tab-btn.active {
+  background: var(--yellow);
+}
+
+.tab-panel {
+  display: none;
+  padding-bottom: 60px;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.panel-head h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.panel-sub {
+  color: var(--gray-500);
+  font-size: 13px;
+  margin: 0;
+}
+
+.cleaning-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.cleaning-table th,
+.cleaning-table td {
+  border: 1px solid var(--gray-300);
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.cleaning-table th {
+  background: var(--gray-100);
+}
+
+.cleaning-table td:first-child {
+  font-weight: 700;
+  background: var(--gray-100);
+}
+
+.cleaning-subtitle {
+  margin: 22px 0 0;
+  font-size: 15px;
+}
+
+.cleaning-note {
+  color: var(--gray-500);
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+
+.cleaning-form h4 {
+  margin: 18px 0 10px;
+  font-size: 14px;
+}
+
+.cleaning-form {
+  margin-top: 20px;
+  border-top: 1px solid var(--gray-300);
+  padding-top: 18px;
+}
+
+.cleaning-assign-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.cleaning-assign-row span {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.board-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.board-layout h2 {
+  margin-top: 0;
+  font-size: 17px;
+}
+
+.post-list li {
+  border-bottom: 1px solid var(--gray-100);
+  padding: 14px 0;
+}
+
+.post-list li:last-child {
+  border-bottom: none;
+}
+
+.post-list .post-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.post-list .post-meta {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-bottom: 6px;
+}
+
+.post-list .post-content {
+  font-size: 14px;
+  color: var(--gray-700);
+  white-space: pre-wrap;
+}
+
+.post-admin-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.post-edit-form {
+  padding-top: 6px;
+}
+
+.post-edit-form input,
+.post-edit-form textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.post-edit-form .form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .board-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Roulette ---------- */
+.roulette-layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 40px;
+  margin-top: 20px;
+  align-items: start;
+}
+
+.roulette-wheel-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+}
+
+.roulette-pointer {
+  font-size: 24px;
+  color: var(--dark);
+}
+
+#rouletteWheel {
+  border-radius: 50%;
+  border: 4px solid var(--dark);
+  transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+}
+
+.roulette-result {
+  font-size: 18px;
+  font-weight: 900;
+  min-height: 26px;
+}
+
+.menu-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 14px;
+}
+
+.menu-list button {
+  border: none;
+  background: none;
+  color: var(--gray-500);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.menu-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.menu-form input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+}
+
+@media (max-width: 760px) {
+  .roulette-layout {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+}

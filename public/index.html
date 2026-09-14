@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HBAF 사내 공용업무 포털</title>
+<link rel="stylesheet" href="/css/base.css" />
+<link rel="stylesheet" href="/css/home.css" />
+<link rel="stylesheet" href="/css/reservation.css" />
+<link rel="stylesheet" href="/css/board.css" />
+<link rel="stylesheet" href="/css/game.css" />
+<link rel="stylesheet" href="/css/vet.css" />
+</head>
+<body>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a href="#" class="brand" data-view="home">
+      <img src="/assets/img/logo.png" alt="HBAF" class="brand__logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" />
+      <span class="brand__logo" style="display:none;">HBAF</span>
+      <span class="brand__title">사내 공용업무 포털</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="site-nav" id="siteNav">
+      <a href="#" data-view="home">홈</a>
+      <a href="#" data-view="meeting-room">회의실 예약</a>
+      <a href="#" data-view="vehicle">법인차량 예약</a>
+      <a href="#" data-view="board">공지 게시판</a>
+      <a href="#" data-view="game">🎮 미니게임</a>
+      <a href="#" data-view="vet">🐱 바프/베프 병원 기록</a>
+      <a href="#" id="adminToggle" class="admin-toggle">🔒 관리자</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ================= 홈 ================= -->
+  <section class="view active" id="view-home">
+    <section class="hero">
+      <div class="container hero__inner">
+        <div class="hero__text">
+          <p class="hero__eyebrow">HBAF INTRANET</p>
+          <h1>오늘도 좋은 하루,<br />필요한 업무는 여기서 한 번에</h1>
+          <p class="hero__desc">회의실·법인차량 예약부터 공지사항, 자유게시판까지<br />사내 공용업무를 위한 포털입니다.</p>
+        </div>
+        <div class="weather" id="weatherWidget">
+          <div class="weather__label">날씨 불러오는 중...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container quick-links">
+      <a class="quick-card" href="#" data-view="meeting-room">
+        <span class="quick-card__icon">🗓️</span>
+        <h3>회의실 예약</h3>
+        <p>08:00 ~ 17:00, 30분 단위로 간편하게 예약하세요.</p>
+      </a>
+      <a class="quick-card" href="#" data-view="vehicle">
+        <span class="quick-card__icon">🚗</span>
+        <h3>법인차량 예약</h3>
+        <p>차량 3대를 30분 단위로 예약하고 운행일지를 작성하세요.</p>
+      </a>
+      <a class="quick-card" href="#" data-view="board">
+        <span class="quick-card__icon">📌</span>
+        <h3>공지 게시판</h3>
+        <p>청소분담표, 자유게시판, 점심 룰렛, 오늘의 신청곡</p>
+      </a>
+      <a class="quick-card" href="#" data-view="game">
+        <span class="quick-card__icon">🎮</span>
+        <h3>미니게임</h3>
+        <p>서울 도심을 누비며 고양이를 피하는 꿀벌 추격전! 실시간 순위표 도전</p>
+      </a>
+      <a class="quick-card" href="#" data-view="vet">
+        <span class="quick-card__icon">🐱</span>
+        <h3>바프/베프 병원 기록</h3>
+        <p>사무실 고양이 바프·베프의 병원 방문일과 특이사항을 달력으로 기록해요</p>
+      </a>
+    </section>
+
+    <section class="container notice-preview">
+      <div class="card">
+        <div class="notice-preview__head">
+          <h2>이번 주 청소 담당</h2>
+          <a href="#" class="btn btn--sm btn--outline" data-view="board" data-subtab="cleaning">전체 보기</a>
+        </div>
+        <div id="cleanupPreview" class="cleanup-preview">불러오는 중...</div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ================= 회의실 예약 ================= -->
+  <section class="view" id="view-meeting-room">
+    <div class="container">
+      <div class="page-header">
+        <h1>회의실 예약</h1>
+        <p>원형회의실 · 08:00 ~ 17:00, 30분 단위로 예약할 수 있습니다.</p>
+      </div>
+
+      <div class="reservation-layout">
+        <section class="card reservation-panel">
+          <div class="form-row">
+            <label for="mrDateInput">날짜</label>
+            <input type="date" id="mrDateInput" />
+          </div>
+
+          <div class="slot-legend">
+            <span><i class="dot dot--available"></i> 예약 가능</span>
+            <span><i class="dot dot--selected"></i> 선택됨</span>
+            <span><i class="dot dot--booked"></i> 예약 완료</span>
+          </div>
+
+          <div id="mrSlotGrid" class="slot-grid"></div>
+          <p class="slot-hint">시작 시간과 종료 시간을 순서대로 클릭해 예약 구간을 선택하세요.</p>
+
+          <form id="mrReservationForm" class="reservation-form">
+            <div class="form-grid">
+              <div class="form-row">
+                <label for="mrUserName">예약자</label>
+                <input type="text" id="mrUserName" required placeholder="홍길동" />
+              </div>
+              <div class="form-row">
+                <label for="mrUserDept">부서</label>
+                <input type="text" id="mrUserDept" placeholder="기획관리부" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="mrPurpose">회의 목적</label>
+              <input type="text" id="mrPurpose" placeholder="주간 업무 회의" />
+            </div>
+            <div class="form-row selected-range" id="mrSelectedRange">선택된 시간이 없습니다.</div>
+            <button type="submit" class="btn" id="mrSubmitBtn" disabled>예약하기</button>
+          </form>
+        </section>
+
+        <section class="card reservation-list">
+          <h2>오늘의 예약 현황</h2>
+          <ul id="mrReservationList" class="reservation-items"></ul>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 법인차량 예약 ================= -->
+  <section class="view" id="view-vehicle">
+    <div class="container">
+      <div class="page-header">
+        <h1>법인차량 예약</h1>
+        <p>차량을 선택하고 08:00 ~ 17:00, 30분 단위로 예약하세요. 이용 후에는 운행일지 작성이 필수입니다.</p>
+      </div>
+
+      <div class="vehicle-grid" id="vehicleGrid"></div>
+
+      <div class="reservation-layout">
+        <section class="card reservation-panel">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="vehDateInput">날짜</label>
+              <input type="date" id="vehDateInput" />
+            </div>
+            <div class="form-row">
+              <label>선택된 차량</label>
+              <div class="selected-range" id="vehSelectedVehicleLabel">-</div>
+            </div>
+          </div>
+
+          <div class="slot-legend">
+            <span><i class="dot dot--available"></i> 예약 가능</span>
+            <span><i class="dot dot--selected"></i> 선택됨</span>
+            <span><i class="dot dot--booked"></i> 예약 완료</span>
+          </div>
+
+          <div id="vehSlotGrid" class="slot-grid"></div>
+          <p class="slot-hint">시작 시간과 종료 시간을 순서대로 클릭해 예약 구간을 선택하세요.</p>
+
+          <form id="vehReservationForm" class="reservation-form">
+            <div class="form-grid">
+              <div class="form-row">
+                <label for="vehUserName">예약자</label>
+                <input type="text" id="vehUserName" required placeholder="홍길동" />
+              </div>
+              <div class="form-row">
+                <label for="vehUserDept">부서</label>
+                <input type="text" id="vehUserDept" placeholder="무역부" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="vehDestination">목적지</label>
+              <input type="text" id="vehDestination" placeholder="거래처 방문 등" />
+            </div>
+            <div class="form-row selected-range" id="vehSelectedRange">선택된 시간이 없습니다.</div>
+            <button type="submit" class="btn" id="vehSubmitBtn" disabled>예약하기</button>
+          </form>
+        </section>
+
+        <section class="card reservation-list">
+          <h2>오늘의 예약 현황</h2>
+          <ul id="vehReservationList" class="reservation-items"></ul>
+        </section>
+      </div>
+
+      <section class="card log-form">
+        <h2>차량 운행일지 작성</h2>
+        <p class="required-note">* 차량 이용자는 반납 후 운행일지를 반드시 작성해 주세요.</p>
+        <form id="vehLogForm">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="vehLogVehicle">차량</label>
+              <select id="vehLogVehicle"></select>
+            </div>
+            <div class="form-row">
+              <label for="vehLogDriver">운전자</label>
+              <input type="text" id="vehLogDriver" required placeholder="홍길동" />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="vehLogDept">부서</label>
+              <input type="text" id="vehLogDept" placeholder="무역부" />
+            </div>
+            <div class="form-row">
+              <label for="vehLogPassengers">동승자</label>
+              <input type="text" id="vehLogPassengers" placeholder="없음" />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="vehLogDeparture">출발지</label>
+              <input type="text" id="vehLogDeparture" required placeholder="본사" />
+            </div>
+            <div class="form-row">
+              <label for="vehLogDestination">도착지</label>
+              <input type="text" id="vehLogDestination" required placeholder="거래처명" />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="vehLogStartOdo">출발 계기판(km)</label>
+              <input type="number" id="vehLogStartOdo" required min="0" />
+            </div>
+            <div class="form-row">
+              <label for="vehLogEndOdo">도착 계기판(km)</label>
+              <input type="number" id="vehLogEndOdo" required min="0" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="vehLogNotes">특이사항</label>
+            <textarea id="vehLogNotes" rows="2" placeholder="사고, 고장, 주유 등 특이사항이 있으면 기록해주세요."></textarea>
+          </div>
+          <button type="submit" class="btn">운행일지 제출</button>
+        </form>
+
+        <h2 style="margin-top:30px;">최근 운행일지</h2>
+        <ul id="vehLogList" class="log-list"></ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ================= 공지 게시판 ================= -->
+  <section class="view" id="view-board">
+    <div class="container">
+      <div class="page-header">
+        <h1>공지 게시판</h1>
+        <p>청소분담표 공지, 자유게시판, 점심 메뉴 룰렛, 오늘의 신청곡을 만나보세요.</p>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button class="tab-btn active" data-tab="cleaning">🧹 청소분담표</button>
+        <button class="tab-btn" data-tab="free-board">💬 자유게시판</button>
+        <button class="tab-btn" data-tab="lunch-roulette">🎯 점심 룰렛</button>
+        <button class="tab-btn" data-tab="song-request">🎵 오늘의 신청곡</button>
+      </div>
+
+      <!-- 청소분담표 -->
+      <section class="tab-panel active" id="cleaning">
+        <div class="card">
+          <div class="panel-head">
+            <div>
+              <h2 id="cleaningMonthLabel">( - )월</h2>
+              <p class="panel-sub">사내 공용업무 분담표</p>
+            </div>
+            <button class="btn btn--sm btn--outline" id="editCleaningBtn">공지 수정</button>
+          </div>
+
+          <h3 class="cleaning-subtitle">1. 탕비실 관리</h3>
+          <table class="cleaning-table" id="pantryTable"></table>
+          <p class="cleaning-note" id="pantryNoteLabel"></p>
+
+          <h3 class="cleaning-subtitle">2. 고양이 케어 / 커피머신 / 테라스 식집사</h3>
+          <table class="cleaning-table" id="careTable"></table>
+
+          <form id="cleaningForm" class="cleaning-form" style="display:none;">
+            <div class="form-row">
+              <label for="cleaningMonthInput">월</label>
+              <input type="number" id="cleaningMonthInput" min="1" max="12" required />
+            </div>
+
+            <h4>1. 탕비실 관리</h4>
+            <div class="form-grid">
+              <div class="form-row">
+                <label for="pantryCatOfficeInput">고양이 사무실 담당</label>
+                <input type="text" id="pantryCatOfficeInput" required placeholder="예: 브랜드기획실" />
+              </div>
+              <div class="form-row">
+                <label for="pantryTerraceInput">테라스 사무실 담당</label>
+                <input type="text" id="pantryTerraceInput" required placeholder="예: 기획관리" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label for="pantryNoteInput">안내 문구</label>
+              <input type="text" id="pantryNoteInput" placeholder="예: 택배보관함 정리 함께 해주세요" />
+            </div>
+
+            <h4>2. 고양이 케어 / 커피머신 / 테라스 식집사</h4>
+            <div class="form-grid">
+              <div class="form-row">
+                <label for="careWeek1Input">1주차</label>
+                <input type="text" id="careWeek1Input" required />
+              </div>
+              <div class="form-row">
+                <label for="careWeek2Input">2주차</label>
+                <input type="text" id="careWeek2Input" required />
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-row">
+                <label for="careWeek3Input">3주차</label>
+                <input type="text" id="careWeek3Input" required />
+              </div>
+              <div class="form-row">
+                <label for="careWeek4Input">4주차</label>
+                <input type="text" id="careWeek4Input" required />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--sm">저장</button>
+              <button type="button" class="btn btn--sm btn--outline" id="cancelCleaningBtn">취소</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- 자유게시판 -->
+      <section class="tab-panel" id="free-board">
+        <div class="board-layout">
+          <div class="card">
+            <h2>글쓰기</h2>
+            <form id="freePostForm">
+              <div class="form-grid">
+                <div class="form-row">
+                  <label for="postAuthor">작성자</label>
+                  <input type="text" id="postAuthor" required placeholder="홍길동" />
+                </div>
+                <div class="form-row">
+                  <label for="postTitle">제목</label>
+                  <input type="text" id="postTitle" required placeholder="제목을 입력하세요" />
+                </div>
+              </div>
+              <div class="form-row">
+                <label for="postContent">내용</label>
+                <textarea id="postContent" rows="4" required placeholder="자유롭게 이야기를 나눠보세요."></textarea>
+              </div>
+              <button type="submit" class="btn btn--sm">등록</button>
+            </form>
+          </div>
+          <div class="card">
+            <h2>게시글 목록</h2>
+            <ul id="freePostList" class="post-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 점심 룰렛 -->
+      <section class="tab-panel" id="lunch-roulette">
+        <div class="card roulette-card">
+          <h2>오늘 점심 뭐 먹지?</h2>
+          <p class="panel-sub">전 직원이 함께 보는 메뉴판입니다. 메뉴를 추가하고 룰렛을 돌려보세요!</p>
+          <div class="roulette-layout">
+            <div class="roulette-wheel-wrap">
+              <div class="roulette-pointer">▼</div>
+              <canvas id="rouletteWheel" width="320" height="320"></canvas>
+              <button class="btn" id="spinBtn">룰렛 돌리기</button>
+              <p class="roulette-result" id="rouletteResult"></p>
+            </div>
+            <div class="roulette-menu">
+              <h3>메뉴 목록</h3>
+              <ul id="menuList" class="menu-list"></ul>
+              <form id="menuForm" class="menu-form">
+                <input type="text" id="menuInput" placeholder="메뉴 추가 (예: 김치찌개)" required />
+                <button type="submit" class="btn btn--sm">추가</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 오늘의 신청곡 -->
+      <section class="tab-panel" id="song-request">
+        <div class="board-layout">
+          <div class="card">
+            <h2>신청곡 등록</h2>
+            <form id="songForm">
+              <div class="form-row">
+                <label for="songTitle">곡명</label>
+                <input type="text" id="songTitle" required placeholder="곡 제목" />
+              </div>
+              <div class="form-row">
+                <label for="songArtist">아티스트</label>
+                <input type="text" id="songArtist" placeholder="아티스트명" />
+              </div>
+              <div class="form-row">
+                <label for="songRequester">신청자</label>
+                <input type="text" id="songRequester" required placeholder="홍길동" />
+              </div>
+              <button type="submit" class="btn btn--sm">신청하기</button>
+            </form>
+          </div>
+          <div class="card">
+            <h2>오늘의 신청곡 리스트</h2>
+            <ul id="songList" class="post-list"></ul>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ================= 미니게임 ================= -->
+  <section class="view" id="view-game">
+    <div class="container">
+      <div class="page-header">
+        <h1>미니게임 · 서울 도심 대탈출</h1>
+        <p>고양이가 바로 뒤까지 쫓아왔어요! 상하좌우로 자유롭게 움직이며 장애물을 피해 최대한 멀리 도망가세요. 목숨은 3개!</p>
+      </div>
+
+      <div class="card game-card">
+        <div class="game-scorebar">
+          <span>🐝 SCORE <strong id="gameScoreLabel">0</strong></span>
+          <span class="game-lives" id="gameLivesLabel">❤️❤️❤️</span>
+          <span>🏆 BEST <strong id="gameHighLabel">0</strong></span>
+          <button type="button" class="game-icon-btn" id="gameMuteBtn" title="음악 켜기/끄기">🔊</button>
+          <button type="button" class="game-icon-btn" id="gameLeaderboardBtn" title="순위표 보기">🏆 순위표</button>
+        </div>
+
+        <div class="game-stage">
+          <canvas id="gameCanvas" width="800" height="360"></canvas>
+
+          <div class="game-overlay" id="gameStartOverlay">
+            <h2>서울 도심 대탈출!</h2>
+            <p>방향키/WASD (모바일은 아래 방향패드)로 상하좌우 이동, 장애물을 피해 최대한 오래 살아남으세요. 목숨은 3개입니다.</p>
+            <div class="form-row game-name-row">
+              <label for="gamePlayerName">이름</label>
+              <input type="text" id="gamePlayerName" placeholder="홍길동" maxlength="12" required />
+            </div>
+            <button class="btn" id="gameStartBtn">시작하기</button>
+          </div>
+
+          <div class="game-overlay" id="gameOverOverlay" hidden>
+            <h2>고양이에게 잡혔다! 🐱</h2>
+            <p><strong id="gameOverName"></strong>님의 점수: <strong id="gameFinalScore">0</strong> · 최고 점수: <strong id="gameFinalHigh">0</strong></p>
+            <div class="game-leaderboard" id="gameLeaderboardInline"></div>
+            <button class="btn" id="gameRestartBtn">다시 도망가기</button>
+          </div>
+
+          <div class="game-overlay" id="gameLeaderboardOverlay" hidden>
+            <h2>🏆 실시간 순위표</h2>
+            <div class="game-leaderboard" id="gameLeaderboardFull"></div>
+            <button class="btn btn--outline" id="gameLeaderboardCloseBtn">닫기</button>
+          </div>
+        </div>
+
+        <div class="game-dpad" id="gameDpad">
+          <button type="button" class="game-dpad__btn game-dpad__up" data-dir="up">▲</button>
+          <button type="button" class="game-dpad__btn game-dpad__left" data-dir="left">◀</button>
+          <button type="button" class="game-dpad__btn game-dpad__right" data-dir="right">▶</button>
+          <button type="button" class="game-dpad__btn game-dpad__down" data-dir="down">▼</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 바프/베프 병원 기록 ================= -->
+  <section class="view" id="view-vet">
+    <div class="container">
+      <div class="page-header">
+        <h1>🐱 바프/베프 병원 기록</h1>
+        <p>사무실 고양이 바프·베프의 병원 방문일과 특이사항을 달력으로 기록해요.</p>
+      </div>
+
+      <div class="card vet-card">
+        <div class="vet-cal-head">
+          <button type="button" class="btn btn--sm btn--outline" id="vetPrevMonth">◀</button>
+          <h2 id="vetMonthLabel">-</h2>
+          <button type="button" class="btn btn--sm btn--outline" id="vetNextMonth">▶</button>
+        </div>
+        <div class="vet-cal-weekdays">
+          <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+        </div>
+        <div class="vet-cal-grid" id="vetCalGrid"></div>
+      </div>
+
+      <div class="board-layout vet-layout">
+        <div class="card">
+          <h2 id="vetSelectedDateLabel">날짜를 선택하세요</h2>
+          <ul id="vetDayRecords" class="post-list"></ul>
+          <form id="vetRecordForm" class="vet-form">
+            <div class="form-row">
+              <label for="vetCatSelect">고양이</label>
+              <select id="vetCatSelect">
+                <option value="바프">바프</option>
+                <option value="베프">베프</option>
+                <option value="바프・베프">바프・베프 둘 다</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="vetNotes">병원 방문 사유 / 진료 내용 / 특이사항</label>
+              <textarea id="vetNotes" rows="3" required placeholder="예: 정기검진, 구토 증상으로 내원, 예방접종 등"></textarea>
+            </div>
+            <button type="submit" class="btn btn--sm">기록 추가</button>
+          </form>
+        </div>
+        <div class="card">
+          <h2>전체 기록</h2>
+          <ul id="vetAllRecords" class="post-list"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <p>&copy; 2026 HBAF. 사내 전용 공용업무 시스템입니다.</p>
+    <p class="site-footer__sub">문의: 영업팀 조강현 매니저</p>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script src="/js/weather.js"></script>
+<script src="/js/meeting-room.js"></script>
+<script src="/js/vehicle.js"></script>
+<script src="/js/board.js"></script>
+<script src="/js/game.js"></script>
+<script src="/js/vet.js"></script>
+</body>
+</html>
