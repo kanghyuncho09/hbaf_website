@@ -145,7 +145,8 @@
   background: var(--white);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
-  padding: 20px;
+  padding: 0;
+  overflow: hidden;
   border: 2px solid transparent;
   transition: border-color 0.15s ease;
 }
@@ -154,18 +155,31 @@
   border-color: var(--yellow);
 }
 
-.vehicle-card__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.vehicle-card__photo-wrap {
+  position: relative;
+  background: var(--gray-100);
 }
 
-.vehicle-card__icon {
-  font-size: 34px;
+.vehicle-card__photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  padding: 12px;
+}
+
+.vehicle-card__badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.vehicle-card__body {
+  padding: 16px 20px 20px;
 }
 
 .vehicle-card h3 {
-  margin: 10px 0 2px;
+  margin: 0 0 2px;
   font-size: 17px;
 }
 

@@ -5,11 +5,7 @@
     "car-3": "395너 5527",
   };
 
-  const VEHICLE_ICONS = {
-    "car-1": "🚙",
-    "car-2": "🚗",
-    "car-3": "🚐",
-  };
+  const VEHICLE_PHOTO = "/assets/img/car.png";
 
   function buildSlots() {
     const slots = [];
@@ -47,15 +43,17 @@
       .map(
         ([id, name]) => `
         <div class="vehicle-card ${id === state.vehicle ? "active" : ""}" data-id="${id}">
-          <div class="vehicle-card__top">
-            <span class="vehicle-card__icon">${VEHICLE_ICONS[id]}</span>
-            <span class="tag tag--available">이용 가능</span>
+          <div class="vehicle-card__photo-wrap">
+            <img src="${VEHICLE_PHOTO}" alt="${name}" class="vehicle-card__photo" />
+            <span class="tag tag--available vehicle-card__badge">이용 가능</span>
           </div>
-          <h3>${name}</h3>
-          <div class="plate">법인 업무용 차량</div>
-          <button class="btn btn--sm ${id === state.vehicle ? "" : "btn--outline"}" data-select="${id}">
-            ${id === state.vehicle ? "선택됨" : "이 차량 선택"}
-          </button>
+          <div class="vehicle-card__body">
+            <h3>${name}</h3>
+            <div class="plate">법인 업무용 차량</div>
+            <button class="btn btn--sm ${id === state.vehicle ? "" : "btn--outline"}" data-select="${id}">
+              ${id === state.vehicle ? "선택됨" : "이 차량 선택"}
+            </button>
+          </div>
         </div>`
       )
       .join("");
