@@ -93,7 +93,7 @@ main {
   padding: 14px 20px;
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
 }
 
 .brand {
@@ -137,15 +137,17 @@ main {
 
 .site-nav {
   display: flex;
-  gap: 6px;
+  flex-shrink: 0;
+  gap: 2px;
 }
 
 .site-nav a {
-  padding: 10px 16px;
+  padding: 9px 12px;
   border-radius: 999px;
   font-weight: 500;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--gray-700);
+  white-space: nowrap;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -331,7 +333,7 @@ main {
   padding: 30px 10px;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1180px) {
   .nav-toggle {
     display: flex;
   }
