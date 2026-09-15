@@ -24,6 +24,7 @@
   // 본사 위치 좌표: 서울특별시 강남구 도산대로45길 6
   const OFFICE_LAT = 37.5228755;
   const OFFICE_LON = 127.0364564;
+  const OFFICE_LOCATION_LABEL = "서울시 강남구 도산대로";
 
   async function loadWeather() {
     const el = document.getElementById("weatherWidget");
@@ -37,6 +38,7 @@
       el.innerHTML = `
         <div class="weather__icon">${info.icon}</div>
         <div class="weather__body">
+          <div class="weather__location">📍 ${OFFICE_LOCATION_LABEL}</div>
           <div class="weather__temp">${Math.round(cur.temperature_2m)}°C</div>
           <div class="weather__label">${info.label} · 습도 ${cur.relative_humidity_2m}%</div>
         </div>
