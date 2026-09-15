@@ -33,19 +33,30 @@
     vehicle: "car-2",
     date: new Date().toISOString().slice(0, 10),
     reservations: [],
+    allReservations: [],
     selStart: null,
     selEnd: null,
   };
 
+  function isVehicleBusyNow(vehicleId) {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    return state.allReservations.some(
+      (r) => r.vehicleId === vehicleId && r.date === todayStr && nowMin >= toMinutes(r.start) && nowMin < toMinutes(r.end)
+    );
+  }
+
   function renderVehicleGrid() {
     const grid = document.getElementById("vehicleGrid");
     grid.innerHTML = Object.entries(VEHICLES)
-      .map(
-        ([id, name]) => `
+      .map(([id, name]) => {
+        const busy = isVehicleBusyNow(id);
+        return `
         <div class="vehicle-card ${id === state.vehicle ? "active" : ""}" data-id="${id}">
           <div class="vehicle-card__photo-wrap">
             <img src="${VEHICLE_PHOTO}" alt="${name}" class="vehicle-card__photo" />
-            <span class="tag tag--available vehicle-card__badge">이용 가능</span>
+            <span class="tag ${busy ? "tag--booked" : "tag--available"} vehicle-card__badge">${busy ? "사용중" : "이용 가능"}</span>
           </div>
           <div class="vehicle-card__body">
             <h3>${name}</h3>
@@ -54,8 +65,8 @@
               ${id === state.vehicle ? "선택됨" : "이 차량 선택"}
             </button>
           </div>
-        </div>`
-      )
+        </div>`;
+      })
       .join("");
 
     grid.querySelectorAll("[data-select]").forEach((btn) => {
@@ -130,7 +141,9 @@
   async function loadReservations() {
     const res = await fetch("/api/vehicle-reservations");
     const all = await res.json();
+    state.allReservations = all;
     state.reservations = all.filter((r) => r.date === state.date && r.vehicleId === state.vehicle);
+    renderVehicleGrid();
     renderGrid();
     renderReservationList(all.filter((r) => r.date === state.date));
   }
@@ -464,5 +477,8 @@
 
     document.getElementById("vehLogExportBtn").addEventListener("click", exportLogsCsv);
     document.addEventListener("admin:changed", renderLogs);
+
+    // 예약 시간이 지나면 자동으로 "사용중" 배지가 사라지도록 주기적으로 다시 그려준다.
+    setInterval(renderVehicleGrid, 60000);
   });
 })();

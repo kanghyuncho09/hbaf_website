@@ -4,11 +4,21 @@
   margin-bottom: 20px;
 }
 
+.meeting-room-photo-wrap {
+  position: relative;
+}
+
 .meeting-room-photo {
   display: block;
   width: 100%;
   max-height: 360px;
   object-fit: cover;
+}
+
+.meeting-room-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
 
 .meeting-room-caption {

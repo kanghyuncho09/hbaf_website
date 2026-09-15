@@ -22,6 +22,7 @@
   const state = {
     date: new Date().toISOString().slice(0, 10),
     reservations: [],
+    allReservations: [],
     selStart: null,
     selEnd: null,
   };
@@ -29,6 +30,24 @@
   function toMinutes(t) {
     const [h, m] = t.split(":").map(Number);
     return h * 60 + m;
+  }
+
+  function isRoomBusyNow() {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    return state.allReservations.some(
+      (r) => r.roomId === ROOM_ID && r.date === todayStr && nowMin >= toMinutes(r.start) && nowMin < toMinutes(r.end)
+    );
+  }
+
+  function renderStatusBadge() {
+    const badge = document.getElementById("mrStatusBadge");
+    if (!badge) return;
+    const busy = isRoomBusyNow();
+    badge.textContent = busy ? "사용중" : "이용 가능";
+    badge.classList.toggle("tag--booked", busy);
+    badge.classList.toggle("tag--available", !busy);
   }
 
   function isSlotBooked(slotStart) {
@@ -91,9 +110,11 @@
   async function loadReservations() {
     const res = await fetch("/api/meeting-reservations");
     const all = await res.json();
+    state.allReservations = all;
     state.reservations = all.filter((r) => r.date === state.date && r.roomId === ROOM_ID);
     renderGrid();
     renderReservationList(state.reservations);
+    renderStatusBadge();
   }
 
   function renderReservationList(list) {
@@ -181,5 +202,8 @@
     if (!document.getElementById("mrSlotGrid")) return;
     initControls();
     loadReservations();
+
+    // 예약 시간이 지나면 자동으로 "사용중" 배지가 사라지도록 주기적으로 다시 그려준다.
+    setInterval(renderStatusBadge, 60000);
   });
 })();
