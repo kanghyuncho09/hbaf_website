@@ -1,3 +1,24 @@
+.meeting-room-photo-card {
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.meeting-room-photo {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+}
+
+.meeting-room-caption {
+  margin: 0;
+  padding: 12px 20px;
+  text-align: center;
+  color: var(--gray-500);
+  font-size: 13px;
+}
+
 .reservation-layout {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
