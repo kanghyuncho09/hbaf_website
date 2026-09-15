@@ -66,6 +66,8 @@ function updateAdminToggleUI() {
     el.textContent = "🔒 관리자";
     el.classList.remove("is-admin");
   }
+  const usersLink = document.getElementById("adminUsersNavLink");
+  if (usersLink) usersLink.style.display = isAdmin() ? "" : "none";
 }
 
 async function handleAdminToggleClick(e) {
@@ -126,13 +128,17 @@ async function loadCleanupPreview() {
   }
 }
 
+function startApp() {
+  navigateTo("home");
+  loadCleanupPreview();
+  document.dispatchEvent(new Event("layout:ready"));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   bindNavigation();
   bindNavToggle();
   bindAdminToggle();
-  navigateTo("home");
-  loadCleanupPreview();
-  document.dispatchEvent(new Event("layout:ready"));
+  // startApp()은 로그인 확인 후 auth.js에서 호출한다 (직원 로그인 필수).
 });
 
 if ("serviceWorker" in navigator) {

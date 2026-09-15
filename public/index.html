@@ -17,9 +17,50 @@
 <link rel="stylesheet" href="/css/game.css" />
 <link rel="stylesheet" href="/css/vet.css" />
 <link rel="stylesheet" href="/css/suggestions.css" />
+<link rel="stylesheet" href="/css/auth.css" />
 </head>
 <body>
-<header class="site-header">
+<div class="auth-gate" id="authGate">
+  <div class="auth-gate__card">
+    <img src="/assets/img/logo.png" alt="HBAF" class="auth-gate__logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" />
+    <span class="brand__logo auth-gate__logo-fallback" style="display:none;">HBAF</span>
+    <p class="auth-gate__subtitle">사내 공용업무 포털</p>
+
+    <form id="loginForm" class="auth-form">
+      <div class="form-row">
+        <label for="loginUsername">아이디</label>
+        <input type="text" id="loginUsername" required autocomplete="username" />
+      </div>
+      <div class="form-row">
+        <label for="loginPassword">비밀번호</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password" />
+      </div>
+      <p class="auth-form__message" id="loginMessage"></p>
+      <button type="submit" class="btn">로그인</button>
+      <p class="auth-form__switch">계정이 없으신가요? <a href="#" id="showSignupBtn">회원가입 신청</a></p>
+    </form>
+
+    <form id="signupForm" class="auth-form" hidden>
+      <div class="form-row">
+        <label for="signupName">이름</label>
+        <input type="text" id="signupName" required maxlength="20" />
+      </div>
+      <div class="form-row">
+        <label for="signupUsername">아이디</label>
+        <input type="text" id="signupUsername" required maxlength="30" autocomplete="username" />
+      </div>
+      <div class="form-row">
+        <label for="signupPassword">비밀번호 (4자 이상)</label>
+        <input type="password" id="signupPassword" required minlength="4" autocomplete="new-password" />
+      </div>
+      <p class="auth-form__message" id="signupMessage"></p>
+      <button type="submit" class="btn">가입 신청</button>
+      <p class="auth-form__switch">가입 신청 후 <b>관리자 승인</b>이 필요합니다. <a href="#" id="showLoginBtn">로그인으로 돌아가기</a></p>
+    </form>
+  </div>
+</div>
+
+<header class="site-header" id="siteHeader" hidden>
   <div class="site-header__inner">
     <a href="#" class="brand" data-view="home">
       <img src="/assets/img/logo.png" alt="HBAF" class="brand__logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" />
@@ -37,12 +78,15 @@
       <a href="#" data-view="game">🎮 미니게임</a>
       <a href="#" data-view="vet">🐱 바프/베프 병원 기록</a>
       <a href="#" data-view="suggestions">💡 기능 건의함</a>
+      <a href="#" data-view="admin-users" id="adminUsersNavLink" style="display:none;">👤 가입 승인</a>
       <a href="#" id="adminToggle" class="admin-toggle">🔒 관리자</a>
+      <span class="user-greeting" id="userGreeting"></span>
+      <a href="#" id="userLogoutBtn" class="user-logout">로그아웃</a>
     </nav>
   </div>
 </header>
 
-<main>
+<main id="mainContent" hidden>
   <!-- ================= 홈 ================= -->
   <section class="view active" id="view-home">
     <section class="hero">
@@ -583,15 +627,29 @@
       <div class="sticky-wall" id="stickyWall"></div>
     </div>
   </section>
+
+  <!-- ================= 관리자: 회원가입 승인 (관리자 전용) ================= -->
+  <section class="view" id="view-admin-users">
+    <div class="container">
+      <div class="page-header">
+        <h1>👤 회원가입 승인</h1>
+        <p>가입 신청한 직원을 승인해야 로그인할 수 있습니다. 관리자로 로그인해야 보이는 화면입니다.</p>
+      </div>
+      <div class="card">
+        <ul id="adminUserList" class="post-list"></ul>
+      </div>
+    </div>
+  </section>
 </main>
 
-<footer class="site-footer">
+<footer class="site-footer" id="siteFooter" hidden>
   <div class="site-footer__inner">
     <p>&copy; 2026 HBAF. 사내 전용 공용업무 시스템입니다.</p>
     <p class="site-footer__sub">문의: 영업팀 조강현 매니저</p>
   </div>
 </footer>
 
+<script src="/js/auth.js"></script>
 <script src="/js/app.js"></script>
 <script src="/js/weather.js"></script>
 <script src="/js/meeting-room.js"></script>
@@ -600,5 +658,6 @@
 <script src="/js/game.js"></script>
 <script src="/js/vet.js"></script>
 <script src="/js/suggestions.js"></script>
+<script src="/js/admin-users.js"></script>
 </body>
 </html>

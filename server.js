@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 const db = require("./db");
 
 const app = express();
@@ -8,6 +9,15 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+// 회사 관리부 요청으로 전 직원 로그인(회원가입 승인제)을 걸어둔다.
+// /api/auth/* (로그인/가입신청)와 /api/admin/* (관리자 전용, 별도의 독립적인 인증)를
+// 제외한 모든 API는 로그인한 사용자만 쓸 수 있다.
+app.use((req, res, next) => {
+  if (!req.path.startsWith("/api/")) return next();
+  if (req.path.startsWith("/api/auth/") || req.path.startsWith("/api/admin/")) return next();
+  return requireUser(req, res, next);
+});
 
 // 실행 중 쌓이는 데이터 파일은 git에 포함하지 않으므로, 없으면 최초 1회 만들어준다.
 db.ensureFile("meeting-reservations", []);
@@ -36,6 +46,7 @@ db.ensureFile("free-posts", [
 db.ensureFile("game-scores", []);
 db.ensureFile("vet-records", []);
 db.ensureFile("suggestions", []);
+db.ensureFile("users", []);
 
 // admin-config.json은 git에 올라가지 않는다(공개 저장소에 비밀번호가 남지 않도록).
 // 파일이 없으면 매번 랜덤 비밀번호를 만들어서 콘솔에 한 번 출력해준다 — 그 값을
@@ -88,6 +99,90 @@ app.post("/api/admin/login", (req, res) => {
 app.post("/api/admin/logout", (req, res) => {
   adminTokens.delete(req.headers["x-admin-token"]);
   res.json({ ok: true });
+});
+
+// ---------- 직원 회원가입 / 로그인 (관리자 승인제) ----------
+// 세션 토큰은 서버 메모리에만 보관한다 (서버 재시작 시 전원 재로그인 필요 — 관리자
+// 세션과 동일한 방식). 비밀번호는 bcrypt로 해시해서 data/users.json에 저장한다.
+const userSessions = new Map(); // token -> { id, name, username }
+
+function requireUser(req, res, next) {
+  const adminToken = req.headers["x-admin-token"];
+  if (adminToken && adminTokens.has(adminToken)) {
+    req.user = { id: "admin", name: "관리자", username: "admin" };
+    return next();
+  }
+  const token = req.headers["x-user-token"];
+  const user = token && userSessions.get(token);
+  if (!user) {
+    return res.status(401).json({ error: "로그인이 필요합니다." });
+  }
+  req.user = user;
+  next();
+}
+
+app.post("/api/auth/register", async (req, res) => {
+  const name = String(req.body.name || "").trim().slice(0, 20);
+  const username = String(req.body.username || "").trim().toLowerCase().slice(0, 30);
+  const password = String(req.body.password || "");
+  if (!name || !username || password.length < 4) {
+    return res.status(400).json({ error: "이름, 아이디, 4자 이상의 비밀번호를 입력해주세요." });
+  }
+  const users = db.readList("users");
+  if (users.some((u) => u.username === username)) {
+    return res.status(409).json({ error: "이미 사용 중인 아이디입니다." });
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  db.appendToList("users", { name, username, passwordHash, status: "pending" });
+  res.status(201).json({ ok: true });
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  const username = String(req.body.username || "").trim().toLowerCase();
+  const password = String(req.body.password || "");
+  const user = db.readList("users").find((u) => u.username === username);
+  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    return res.status(401).json({ error: "아이디 또는 비밀번호가 올바르지 않습니다." });
+  }
+  if (user.status === "pending") {
+    return res.status(403).json({ error: "아직 관리자 승인 대기 중입니다. 승인 후 이용해주세요." });
+  }
+  if (user.status === "rejected") {
+    return res.status(403).json({ error: "가입이 승인되지 않았습니다. 관리자에게 문의해주세요." });
+  }
+  const token = crypto.randomBytes(24).toString("hex");
+  userSessions.set(token, { id: user.id, name: user.name, username: user.username });
+  res.json({ token, name: user.name });
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  userSessions.delete(req.headers["x-user-token"]);
+  res.json({ ok: true });
+});
+
+app.get("/api/auth/me", requireUser, (req, res) => {
+  res.json(req.user);
+});
+
+// ---------- 관리자: 회원가입 승인 관리 ----------
+app.get("/api/admin/users", requireAdmin, (req, res) => {
+  const users = db.readList("users").map(({ passwordHash, ...rest }) => rest);
+  res.json(users.sort((a, b) => b.id - a.id));
+});
+
+app.post("/api/admin/users/:id/approve", requireAdmin, (req, res) => {
+  const updated = db.updateInList("users", req.params.id, { status: "approved" });
+  res.status(updated ? 200 : 404).json({ ok: !!updated });
+});
+
+app.post("/api/admin/users/:id/reject", requireAdmin, (req, res) => {
+  const updated = db.updateInList("users", req.params.id, { status: "rejected" });
+  res.status(updated ? 200 : 404).json({ ok: !!updated });
+});
+
+app.delete("/api/admin/users/:id", requireAdmin, (req, res) => {
+  const ok = db.removeFromList("users", req.params.id);
+  res.status(ok ? 200 : 404).json({ ok });
 });
 
 // ---------- 회의실/차량 예약 자동 정리 ----------
