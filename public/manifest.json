@@ -1,0 +1,20 @@
+{
+  "name": "HBAF 사내 공용업무 포털",
+  "short_name": "HBAF 포털",
+  "description": "회의실/법인차량 예약, 공지 게시판, 바프·베프 병원 기록, 미니게임을 담은 HBAF 사내 인트라넷",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fffae8",
+  "theme_color": "#ffc700",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/assets/img/logo.png",
+      "sizes": "2541x1223",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -134,3 +134,9 @@ document.addEventListener("DOMContentLoaded", () => {
   loadCleanupPreview();
   document.dispatchEvent(new Event("layout:ready"));
 });
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
