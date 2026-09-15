@@ -178,6 +178,33 @@
       } catch (err) {}
       location.reload();
     });
+
+    const gateAdminBtn = document.getElementById("gateAdminLoginBtn");
+    if (gateAdminBtn) {
+      gateAdminBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const pw = prompt("관리자 비밀번호를 입력하세요.");
+        if (!pw) return;
+        try {
+          const res = await originalFetch("/api/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: pw }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            alert(data.error || "관리자 로그인에 실패했습니다.");
+            return;
+          }
+          localStorage.setItem("hbaf-admin-token", data.token);
+          hideGate();
+          startApp();
+          if (typeof updateAdminToggleUI === "function") updateAdminToggleUI();
+        } catch (err) {
+          alert("로그인 중 오류가 발생했습니다.");
+        }
+      });
+    }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
