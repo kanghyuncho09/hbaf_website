@@ -35,6 +35,7 @@ db.ensureFile("free-posts", [
 ]);
 db.ensureFile("game-scores", []);
 db.ensureFile("vet-records", []);
+db.ensureFile("suggestions", []);
 
 // admin-config.json은 git에 올라가지 않는다(공개 저장소에 비밀번호가 남지 않도록).
 // 파일이 없으면 매번 랜덤 비밀번호를 만들어서 콘솔에 한 번 출력해준다 — 그 값을
@@ -320,6 +321,30 @@ app.post("/api/vet-records", (req, res) => {
 
 app.delete("/api/vet-records/:id", requireAdmin, (req, res) => {
   const ok = db.removeFromList("vet-records", req.params.id);
+  res.status(ok ? 200 : 404).json({ ok });
+});
+
+// ---------- 기능 건의함 (스티커 메모, 영구 보관 - 삭제는 관리자만) ----------
+app.get("/api/suggestions", (req, res) => {
+  const list = db.readList("suggestions").sort((a, b) => b.id - a.id);
+  res.json(list);
+});
+
+app.post("/api/suggestions", (req, res) => {
+  const { author, content } = req.body;
+  const cleanContent = String(content || "").trim().slice(0, 200);
+  if (!cleanContent) {
+    return res.status(400).json({ error: "건의 내용을 입력해주세요." });
+  }
+  const record = db.appendToList("suggestions", {
+    author: String(author || "").trim().slice(0, 12) || "익명",
+    content: cleanContent,
+  });
+  res.status(201).json(record);
+});
+
+app.delete("/api/suggestions/:id", requireAdmin, (req, res) => {
+  const ok = db.removeFromList("suggestions", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
 });
 

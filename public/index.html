@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="/css/board.css" />
 <link rel="stylesheet" href="/css/game.css" />
 <link rel="stylesheet" href="/css/vet.css" />
+<link rel="stylesheet" href="/css/suggestions.css" />
 </head>
 <body>
 <header class="site-header">
@@ -35,6 +36,7 @@
       <a href="#" data-view="board">공지 게시판</a>
       <a href="#" data-view="game">🎮 미니게임</a>
       <a href="#" data-view="vet">🐱 바프/베프 병원 기록</a>
+      <a href="#" data-view="suggestions">💡 기능 건의함</a>
       <a href="#" id="adminToggle" class="admin-toggle">🔒 관리자</a>
     </nav>
   </div>
@@ -81,6 +83,11 @@
         <span class="quick-card__icon">🐱</span>
         <h3>바프/베프 병원 기록</h3>
         <p>사무실 고양이 바프·베프의 병원 방문일과 특이사항을 달력으로 기록해요</p>
+      </a>
+      <a class="quick-card" href="#" data-view="suggestions">
+        <span class="quick-card__icon">💡</span>
+        <h3>기능 건의함</h3>
+        <p>포털에 추가하고 싶은 기능을 스티커 메모로 자유롭게 남겨주세요</p>
       </a>
     </section>
 
@@ -540,6 +547,34 @@
       </div>
     </div>
   </section>
+
+  <!-- ================= 기능 건의함 ================= -->
+  <section class="view" id="view-suggestions">
+    <div class="container">
+      <div class="page-header">
+        <h1>💡 기능 건의함</h1>
+        <p>포털에 추가하고 싶은 기능, 불편한 점을 스티커 메모로 자유롭게 남겨주세요. 남긴 메모는 계속 보관됩니다.</p>
+      </div>
+
+      <div class="card suggestion-form-card">
+        <form id="suggestionForm" class="suggestion-form">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="suggestionAuthor">이름 (선택)</label>
+              <input type="text" id="suggestionAuthor" placeholder="익명" maxlength="12" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="suggestionContent">건의 내용</label>
+            <textarea id="suggestionContent" rows="2" required placeholder="예: 회의실 예약할 때 반복 예약도 되면 좋겠어요!" maxlength="200"></textarea>
+          </div>
+          <button type="submit" class="btn btn--sm">메모 붙이기</button>
+        </form>
+      </div>
+
+      <div class="sticky-wall" id="stickyWall"></div>
+    </div>
+  </section>
 </main>
 
 <footer class="site-footer">
@@ -556,5 +591,6 @@
 <script src="/js/board.js"></script>
 <script src="/js/game.js"></script>
 <script src="/js/vet.js"></script>
+<script src="/js/suggestions.js"></script>
 </body>
 </html>

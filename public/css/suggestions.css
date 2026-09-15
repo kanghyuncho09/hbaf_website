@@ -1,0 +1,108 @@
+@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap");
+
+.suggestion-form-card {
+  margin-bottom: 28px;
+}
+
+.suggestion-form textarea {
+  resize: vertical;
+}
+
+.sticky-wall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px;
+  padding: 10px 4px 60px;
+}
+
+.sticky-note {
+  position: relative;
+  width: 220px;
+  min-height: 170px;
+  padding: 26px 16px 16px;
+  border-radius: 3px;
+  box-shadow: 4px 8px 16px rgba(33, 33, 33, 0.18);
+  font-family: "Gaegu", "Noto Sans KR", sans-serif;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease;
+}
+
+.sticky-note:hover {
+  transform: translateY(-4px) scale(1.02);
+  z-index: 2;
+}
+
+.sticky-note::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 60px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-note--y0 { background: #fff59d; transform: rotate(-3deg); }
+.sticky-note--y1 { background: #ffcc80; transform: rotate(2deg); }
+.sticky-note--y2 { background: #c8e6c9; transform: rotate(-2deg); }
+.sticky-note--y3 { background: #b3e5fc; transform: rotate(3deg); }
+.sticky-note--y4 { background: #f8bbd0; transform: rotate(-1deg); }
+.sticky-note:hover.sticky-note--y0,
+.sticky-note:hover.sticky-note--y1,
+.sticky-note:hover.sticky-note--y2,
+.sticky-note:hover.sticky-note--y3,
+.sticky-note:hover.sticky-note--y4 {
+  transform: translateY(-4px) scale(1.04) rotate(0deg);
+}
+
+.sticky-note__content {
+  flex: 1;
+  font-size: 17px;
+  line-height: 1.4;
+  color: #3a3320;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+
+.sticky-note__meta {
+  font-size: 12px;
+  color: #6b6248;
+  font-family: "Noto Sans KR", sans-serif;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.sticky-note__delete {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  border: none;
+  background: rgba(0, 0, 0, 0.12);
+  color: #3a3320;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sticky-note__delete:hover {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+@media (max-width: 480px) {
+  .sticky-wall {
+    justify-content: center;
+  }
+  .sticky-note {
+    width: 44vw;
+    min-width: 150px;
+  }
+}

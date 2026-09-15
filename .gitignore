@@ -12,6 +12,7 @@ data/song-requests.json
 data/lunch-menu.json
 data/game-scores.json
 data/vet-records.json
+data/suggestions.json
 
 # 관리자 비밀번호 (공개 저장소에 절대 커밋하지 않음 — ADMIN_PASSWORD 환경변수 또는
 # 이 로컬 파일로만 관리. 파일이 없으면 서버가 랜덤 비밀번호를 만들어 콘솔에 출력한다)
