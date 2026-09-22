@@ -18,3 +18,6 @@ data/users.json
 # 관리자 비밀번호 (공개 저장소에 절대 커밋하지 않음 — ADMIN_PASSWORD 환경변수 또는
 # 이 로컬 파일로만 관리. 파일이 없으면 서버가 랜덤 비밀번호를 만들어 콘솔에 출력한다)
 data/admin-config.json
+
+# 로그인 토큰 서명용 비밀키 (유출되면 누구나 토큰을 위조할 수 있으므로 커밋 금지)
+data/auth-secret.json

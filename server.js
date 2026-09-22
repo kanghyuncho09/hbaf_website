@@ -48,6 +48,10 @@ db.ensureFile("vet-records", []);
 db.ensureFile("suggestions", []);
 db.ensureFile("users", []);
 
+// 로그인 토큰 서명에 쓰는 비밀키. 파일로 저장해두면(퍼시스턴트 디스크에 보관되므로)
+// 서버가 재배포/재시작돼도 같은 키를 계속 쓸 수 있어 로그인이 풀리지 않는다.
+db.ensureFile("auth-secret", { secret: crypto.randomBytes(32).toString("hex") });
+
 // admin-config.json은 git에 올라가지 않는다(공개 저장소에 비밀번호가 남지 않도록).
 // 파일이 없으면 매번 랜덤 비밀번호를 만들어서 콘솔에 한 번 출력해준다 — 그 값을
 // 확인해서 로그인하거나, ADMIN_PASSWORD 환경변수로 원하는 값을 직접 정해도 된다.
@@ -67,20 +71,45 @@ db.ensureFile("cleaning-schedule", {
   updatedAt: new Date().toISOString(),
 });
 
-// ---------- 관리자 인증 ----------
-// 토큰은 서버 메모리에만 보관 (서버 재시작 시 재로그인 필요). 사내 전용 툴 수준의
-// 간단한 보호. 배포 환경에서는 Render 대시보드의 ADMIN_PASSWORD 환경변수가 우선
-// 적용되고(깃허브에 올라가는 값이 아니라 안전), 없으면 data/admin-config.json 값을 쓴다.
-const adminTokens = new Set();
+// ---------- 로그인 토큰 서명/검증 ----------
+// 로그인 토큰에 "누구인지"를 직접 담아 서명해두는 방식(자체 검증 토큰)이라, 서버가
+// 재배포되거나 재시작돼도(무료 요금제의 슬립, 배포 등) 서버 메모리에 저장해둔 세션
+// 목록이 사라지는 것과 무관하게 로그인이 계속 유지된다 — 직접 로그아웃하기 전까지는
+// 만료일(아래 TOKEN_MAX_AGE) 안에서 계속 로그인 상태가 이어진다.
+const AUTH_SECRET = db.readJSON("auth-secret").secret;
+const TOKEN_MAX_AGE = 1000 * 60 * 60 * 24 * 180; // 180일
 
+function signToken(payload) {
+  const body = Buffer.from(JSON.stringify({ ...payload, iat: Date.now() })).toString("base64url");
+  const sig = crypto.createHmac("sha256", AUTH_SECRET).update(body).digest("base64url");
+  return `${body}.${sig}`;
+}
+
+function verifyToken(token) {
+  if (!token || typeof token !== "string" || !token.includes(".")) return null;
+  const [body, sig] = token.split(".");
+  const expected = crypto.createHmac("sha256", AUTH_SECRET).update(body).digest("base64url");
+  if (sig !== expected) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString());
+    if (!payload.iat || Date.now() - payload.iat > TOKEN_MAX_AGE) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+// ---------- 관리자 인증 ----------
+// 배포 환경에서는 Render 대시보드의 ADMIN_PASSWORD 환경변수가 우선 적용되고
+// (깃허브에 올라가는 값이 아니라 안전), 없으면 data/admin-config.json 값을 쓴다.
 function getAdminPassword() {
   if (process.env.ADMIN_PASSWORD) return process.env.ADMIN_PASSWORD;
   return db.readJSON("admin-config").password;
 }
 
 function requireAdmin(req, res, next) {
-  const token = req.headers["x-admin-token"];
-  if (!token || !adminTokens.has(token)) {
+  const payload = verifyToken(req.headers["x-admin-token"]);
+  if (!payload || payload.role !== "admin") {
     return res.status(403).json({ error: "관리자 권한이 필요합니다." });
   }
   next();
@@ -91,33 +120,26 @@ app.post("/api/admin/login", (req, res) => {
   if (password !== getAdminPassword()) {
     return res.status(401).json({ error: "비밀번호가 올바르지 않습니다." });
   }
-  const token = crypto.randomBytes(24).toString("hex");
-  adminTokens.add(token);
-  res.json({ token });
+  res.json({ token: signToken({ role: "admin" }) });
 });
 
 app.post("/api/admin/logout", (req, res) => {
-  adminTokens.delete(req.headers["x-admin-token"]);
   res.json({ ok: true });
 });
 
 // ---------- 직원 회원가입 / 로그인 (관리자 승인제) ----------
-// 세션 토큰은 서버 메모리에만 보관한다 (서버 재시작 시 전원 재로그인 필요 — 관리자
-// 세션과 동일한 방식). 비밀번호는 bcrypt로 해시해서 data/users.json에 저장한다.
-const userSessions = new Map(); // token -> { id, name, username }
-
+// 비밀번호는 bcrypt로 해시해서 data/users.json에 저장한다.
 function requireUser(req, res, next) {
-  const adminToken = req.headers["x-admin-token"];
-  if (adminToken && adminTokens.has(adminToken)) {
+  const adminPayload = verifyToken(req.headers["x-admin-token"]);
+  if (adminPayload && adminPayload.role === "admin") {
     req.user = { id: "admin", name: "관리자", username: "admin" };
     return next();
   }
-  const token = req.headers["x-user-token"];
-  const user = token && userSessions.get(token);
-  if (!user) {
+  const payload = verifyToken(req.headers["x-user-token"]);
+  if (!payload || payload.role !== "user") {
     return res.status(401).json({ error: "로그인이 필요합니다." });
   }
-  req.user = user;
+  req.user = { id: payload.id, name: payload.name, username: payload.username };
   next();
 }
 
@@ -150,13 +172,11 @@ app.post("/api/auth/login", async (req, res) => {
   if (user.status === "rejected") {
     return res.status(403).json({ error: "가입이 승인되지 않았습니다. 관리자에게 문의해주세요." });
   }
-  const token = crypto.randomBytes(24).toString("hex");
-  userSessions.set(token, { id: user.id, name: user.name, username: user.username });
+  const token = signToken({ role: "user", id: user.id, name: user.name, username: user.username });
   res.json({ token, name: user.name });
 });
 
 app.post("/api/auth/logout", (req, res) => {
-  userSessions.delete(req.headers["x-user-token"]);
   res.json({ ok: true });
 });
 
