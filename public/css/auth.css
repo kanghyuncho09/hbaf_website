@@ -13,6 +13,18 @@
   display: none;
 }
 
+/* 로그인 토큰이 이미 있을 때 로그인 화면이 잠깐 번쩍이는 걸 막기 위한
+   선반영 스타일 (index.html 맨 위 인라인 스크립트가 붙이는 클래스). */
+html.auth-optimistic .auth-gate {
+  display: none;
+}
+
+html.auth-optimistic #siteHeader,
+html.auth-optimistic #mainContent,
+html.auth-optimistic #siteFooter {
+  display: block;
+}
+
 .auth-gate__card {
   width: 100%;
   max-width: 380px;

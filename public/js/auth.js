@@ -45,6 +45,9 @@
   }
 
   function showGate() {
+    // 로그인 화면을 실제로 띄워야 하는 상황이면(토큰이 없거나 무효함), 초기
+    // 로딩 시 붙여둔 "일단 로그인된 것처럼 보여주기" 클래스부터 떼어낸다.
+    document.documentElement.classList.remove("auth-optimistic");
     document.getElementById("authGate").hidden = false;
     document.getElementById("siteHeader").hidden = true;
     document.getElementById("mainContent").hidden = true;

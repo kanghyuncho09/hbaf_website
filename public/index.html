@@ -4,6 +4,19 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>HBAF 사내 공용업무 포털</title>
+<script>
+  // 로그인 토큰이 이미 있으면 로그인 화면이 그려지기도 전에 미리 숨겨서,
+  // 새로고침할 때마다 로그인 화면이 잠깐 번쩍이는 걸 막는다. 서버에 실제로
+  // 유효한지 확인하는 건 auth.js가 이어서 하고, 혹시 무효한 토큰이면
+  // auth.js가 다시 로그인 화면을 띄운다.
+  (function () {
+    try {
+      if (localStorage.getItem("hbaf-user-token") || localStorage.getItem("hbaf-admin-token")) {
+        document.documentElement.classList.add("auth-optimistic");
+      }
+    } catch (e) {}
+  })();
+</script>
 <link rel="manifest" href="/manifest.json" />
 <meta name="theme-color" content="#ffc700" />
 <link rel="icon" href="/assets/img/logo.png" type="image/png" />
