@@ -32,11 +32,7 @@
   function renderCleaningTables() {
     document.getElementById("cleaningMonthLabel").textContent = `( ${cleaningData.month} )월`;
     renderAssignTable("pantryTable", Object.entries(cleaningData.pantry || {}));
-    const careEntries = Object.entries(cleaningData.care || {}).map(([label, team], i) => [
-      `${label} (${weekDateRange(cleaningData.month, i + 1)})`,
-      team,
-    ]);
-    renderAssignTable("careTable", careEntries);
+    renderAssignTable("careTable", Object.entries(cleaningData.care || {}));
     const noteEl = document.getElementById("pantryNoteLabel");
     noteEl.textContent = cleaningData.pantryNote ? `* ${cleaningData.pantryNote}` : "";
   }

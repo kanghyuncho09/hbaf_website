@@ -111,27 +111,12 @@ function bindAdminToggle() {
   updateAdminToggleUI();
 }
 
-// 매월 1~7일=1주차, 8~14일=2주차, 15~21일=3주차, 22일~말일=4주차로 나눠서
-// "N주차"가 실제로 며칠부터 며칠까지인지 직관적으로 보여준다.
-function weekDateRange(month, weekNum) {
-  const year = new Date().getFullYear();
-  const lastDay = new Date(year, month, 0).getDate();
-  const starts = [1, 8, 15, 22];
-  const start = starts[weekNum - 1];
-  const end = weekNum === 4 ? lastDay : Math.min(starts[weekNum] - 1, lastDay);
-  return `${month}/${start}~${month}/${end}`;
-}
-
 async function loadCleanupPreview() {
   const el = document.getElementById("cleanupPreview");
   try {
     const res = await fetch("/api/cleaning-schedule");
     const data = await res.json();
-    const careRows = Object.entries(data.care || {}).map(([label, team], i) => [
-      `${label} (${weekDateRange(data.month, i + 1)})`,
-      team,
-    ]);
-    const rows = [...Object.entries(data.pantry || {}), ...careRows];
+    const rows = [...Object.entries(data.pantry || {}), ...Object.entries(data.care || {})];
     el.innerHTML = `
       <p class="cleanup-preview__week">( ${data.month} )월 담당 안내</p>
       <ul class="cleanup-preview__list">
