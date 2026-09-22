@@ -37,67 +37,138 @@
   padding-bottom: 60px;
 }
 
-.slot-legend {
+/* ---------- 시간 선택 슬라이더 (쏘카 스타일 드래그 바) ---------- */
+.time-slider {
+  margin-bottom: 20px;
+}
+
+.time-slider__duration {
+  font-weight: 800;
+  font-size: 17px;
+  margin-bottom: 18px;
   display: flex;
-  gap: 18px;
-  font-size: 13px;
-  color: var(--gray-700);
-  margin: 6px 0 14px;
+  align-items: center;
+  gap: 6px;
 }
 
-.dot {
-  display: inline-block;
-  width: 10px;
+.time-slider__track {
+  position: relative;
   height: 10px;
-  border-radius: 50%;
-  margin-right: 4px;
-}
-
-.dot--available { background: var(--gray-100); border: 2px solid var(--gray-300); }
-.dot--selected { background: var(--yellow); border: 2px solid var(--dark); }
-.dot--booked { background: var(--danger); border: 2px solid var(--danger); }
-
-.slot-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.slot {
-  padding: 10px 4px;
-  text-align: center;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--gray-300);
+  border-radius: 999px;
   background: var(--gray-100);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--gray-700);
-  transition: all 0.1s ease;
+  margin: 34px 26px 10px;
 }
 
-.slot:hover:not(.slot--booked) {
-  border-color: var(--yellow-dark);
-  cursor: pointer;
+.time-slider__track.is-disabled {
+  opacity: 0.5;
 }
 
-.slot--selected {
-  background: var(--yellow);
-  border-color: var(--dark);
-  color: var(--dark);
+.time-slider__segment {
+  position: absolute;
+  top: 0;
+  height: 100%;
 }
 
-.slot--booked {
+.time-slider__segment--past {
+  left: 0;
+  background: var(--gray-300);
+  border-radius: 999px 0 0 999px;
+  z-index: 1;
+}
+
+.time-slider__segment--booked {
   background: #fdecea;
-  border-color: var(--danger);
-  color: var(--danger);
+  z-index: 1;
+}
+
+.time-slider__segment--range {
+  background: var(--yellow);
+  z-index: 2;
+  border-radius: 999px;
+}
+
+.time-slider__handle {
+  position: absolute;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--dark);
+  border: 3px solid var(--white);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  cursor: grab;
+  touch-action: none;
+}
+
+.time-slider__handle:active {
+  cursor: grabbing;
+}
+
+.time-slider__handle.is-disabled {
   cursor: not-allowed;
 }
 
-.slot-hint {
+.time-slider__handle::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--dark);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.time-slider__labels {
+  display: flex;
+  justify-content: space-between;
   font-size: 12px;
   color: var(--gray-500);
-  margin: 0 0 20px;
+  margin: 0 26px 18px;
+}
+
+.time-slider__status {
+  background: var(--gray-100);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--gray-700);
+  margin-bottom: 18px;
+}
+
+.time-slider__status.is-warning {
+  background: #fdecea;
+  color: var(--danger);
+}
+
+.time-slider__rows {
+  border-top: 1px solid var(--gray-100);
+  margin-bottom: 4px;
+}
+
+.time-slider__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.time-slider__row-label {
+  font-weight: 700;
+}
+
+.time-slider__row-value {
+  color: var(--gray-700);
+  font-weight: 600;
 }
 
 .reservation-form {
@@ -158,9 +229,6 @@
 @media (max-width: 900px) {
   .reservation-layout {
     grid-template-columns: 1fr;
-  }
-  .slot-grid {
-    grid-template-columns: repeat(4, 1fr);
   }
 }
 
