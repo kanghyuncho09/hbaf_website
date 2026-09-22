@@ -39,11 +39,23 @@
     }
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      const hasRecords = recordsForDate(dateStr).length > 0;
+      const dayRecords = recordsForDate(dateStr);
       const classes = ["vet-cal-cell"];
       if (dateStr === todayStr()) classes.push("is-today");
       if (dateStr === selectedDate) classes.push("is-selected");
-      html += `<div class="${classes.join(" ")}" data-date="${dateStr}">${d}${hasRecords ? '<span class="vet-cal-dot"></span>' : ""}</div>`;
+
+      const shown = dayRecords.slice(0, 2);
+      const extra = dayRecords.length - shown.length;
+      const previewHtml = dayRecords.length
+        ? `<div class="vet-cal-preview">
+            ${shown
+              .map((r) => `<div class="vet-cal-preview__item">${escapeHtml(r.cat)}: ${escapeHtml(r.notes)}</div>`)
+              .join("")}
+            ${extra > 0 ? `<div class="vet-cal-preview__more">+${extra}건 더보기</div>` : ""}
+          </div>`
+        : "";
+
+      html += `<div class="${classes.join(" ")}" data-date="${dateStr}"><span class="vet-cal-daynum">${d}</span>${previewHtml}</div>`;
     }
     grid.innerHTML = html;
 
