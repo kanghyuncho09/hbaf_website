@@ -87,12 +87,24 @@
     return state.reservations.some((r) => s >= toMinutes(r.start) && s < toMinutes(r.end));
   }
 
+  // 종료로 클릭한 슬롯은 "그 시각까지"라는 경계를 의미하므로 블록에는 포함하지
+  // 않는다 (예: 10:00 클릭 후 11:00 클릭 = 10:00~11:00, 11:00~11:30 블록은 제외).
+  // 다만 마지막 슬롯(16:30)을 종료로 클릭한 경우는 마감 시간(17:00)까지 이용하려는
+  // 것이므로 그 블록까지 포함한다.
   function isSlotSelected(idx) {
     if (state.selStart === null) return false;
-    const end = state.selEnd !== null ? state.selEnd : state.selStart;
-    const lo = Math.min(state.selStart, end);
-    const hi = Math.max(state.selStart, end);
-    return idx >= lo && idx <= hi;
+    if (state.selEnd === null) return idx === state.selStart;
+    const lo = Math.min(state.selStart, state.selEnd);
+    const hi = Math.max(state.selStart, state.selEnd);
+    if (hi === SLOTS.length - 1) return idx >= lo && idx <= hi;
+    return idx >= lo && idx < hi;
+  }
+
+  function computeEndTime() {
+    const endIdx = state.selEnd !== null ? state.selEnd : state.selStart;
+    const endSlot = SLOTS[endIdx];
+    if (state.selEnd !== null && endIdx < SLOTS.length - 1) return endSlot;
+    return slotEnd(endSlot);
   }
 
   function renderGrid() {
@@ -132,9 +144,7 @@
       return;
     }
     const startSlot = SLOTS[state.selStart];
-    const endIdx = state.selEnd !== null ? state.selEnd : state.selStart;
-    const endSlot = SLOTS[endIdx];
-    label.textContent = `${VEHICLES[state.vehicle]} · ${startSlot} ~ ${slotEnd(endSlot)}`;
+    label.textContent = `${VEHICLES[state.vehicle]} · ${startSlot} ~ ${computeEndTime()}`;
     submitBtn.disabled = false;
   }
 
@@ -404,9 +414,8 @@
       e.preventDefault();
       const name = document.getElementById("vehUserName").value.trim();
       if (!name || state.selStart === null) return;
-      const endIdx = state.selEnd !== null ? state.selEnd : state.selStart;
       const start = SLOTS[state.selStart];
-      const end = slotEnd(SLOTS[endIdx]);
+      const end = computeEndTime();
 
       const payload = {
         date: state.date,
