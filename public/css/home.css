@@ -135,6 +135,7 @@
   margin: 0;
   color: var(--gray-500);
   font-size: 14px;
+  word-break: keep-all;
 }
 
 .notice-preview {
