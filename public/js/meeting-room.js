@@ -123,6 +123,7 @@
       ul.innerHTML = `<li class="empty-state">이 날짜에 등록된 예약이 없습니다.</li>`;
       return;
     }
+    const admin = isAdmin();
     ul.innerHTML = list
       .slice()
       .sort((a, b) => a.start.localeCompare(b.start))
@@ -133,7 +134,7 @@
           <span class="r-meta">${r.name}${r.dept ? " (" + r.dept + ")" : ""}
             ${r.purpose ? `<small>${r.purpose}</small>` : ""}
           </span>
-          <button class="cancel-btn" data-id="${r.id}">취소</button>
+          ${admin ? `<button class="cancel-btn" data-id="${r.id}">취소</button>` : ""}
         </li>`
       )
       .join("");
@@ -141,7 +142,14 @@
     ul.querySelectorAll(".cancel-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("이 예약을 취소하시겠습니까?")) return;
-        await fetch(`/api/meeting-reservations/${btn.dataset.id}`, { method: "DELETE" });
+        const res = await fetch(`/api/meeting-reservations/${btn.dataset.id}`, {
+          method: "DELETE",
+          headers: adminHeaders(),
+        });
+        if (!res.ok) {
+          alert("취소 권한이 없거나 실패했습니다.");
+          return;
+        }
         loadReservations();
       });
     });
@@ -205,5 +213,7 @@
 
     // 예약 시간이 지나면 자동으로 "사용중" 배지가 사라지도록 주기적으로 다시 그려준다.
     setInterval(renderStatusBadge, 60000);
+
+    document.addEventListener("admin:changed", () => renderReservationList(state.reservations));
   });
 })();

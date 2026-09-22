@@ -56,23 +56,47 @@
     });
   }
 
+  const CAT_OPTIONS = ["바프", "베프", "바프・베프"];
+
   function renderRecordItem(r, showDate) {
+    const catOptions = CAT_OPTIONS.map(
+      (c) => `<option value="${c}" ${c === r.cat ? "selected" : ""}>${c === "바프・베프" ? "바프・베프 둘 다" : c}</option>`
+    ).join("");
     return `
       <li data-record-id="${r.id}">
-        <div class="post-title">
-          <span class="vet-record-cat">${escapeHtml(r.cat)}</span>${showDate ? escapeHtml(r.date) : ""}
+        <div class="record-view">
+          <div class="post-title">
+            <span class="vet-record-cat">${escapeHtml(r.cat)}</span>${showDate ? escapeHtml(r.date) : ""}
+          </div>
+          <div class="post-content">${escapeHtml(r.notes)}</div>
+          <div class="post-admin-actions">
+            <button type="button" class="btn btn--sm btn--outline" data-edit-vet="${r.id}">수정</button>
+            <button type="button" class="btn btn--sm btn--outline" data-delete-vet="${r.id}">삭제</button>
+          </div>
         </div>
-        <div class="post-content">${escapeHtml(r.notes)}</div>
-        ${
-          isAdmin()
-            ? `<div class="post-admin-actions"><button type="button" class="btn btn--sm btn--outline" data-delete-vet="${r.id}">삭제</button></div>`
-            : ""
-        }
+        <form class="record-edit-form" data-edit-form="${r.id}" hidden>
+          <div class="form-row">
+            <label>날짜</label>
+            <input type="date" data-field="date" value="${r.date}" required />
+          </div>
+          <div class="form-row">
+            <label>고양이</label>
+            <select data-field="cat">${catOptions}</select>
+          </div>
+          <div class="form-row">
+            <label>병원 방문 사유 / 진료 내용 / 특이사항</label>
+            <textarea data-field="notes" rows="3" required>${escapeHtml(r.notes)}</textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--sm">저장</button>
+            <button type="button" class="btn btn--sm btn--outline" data-cancel-edit="${r.id}">취소</button>
+          </div>
+        </form>
       </li>
     `;
   }
 
-  function bindDeleteButtons(container) {
+  function bindRecordActions(container) {
     container.querySelectorAll("[data-delete-vet]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("이 기록을 삭제하시겠습니까?")) return;
@@ -81,7 +105,46 @@
           headers: adminHeaders(),
         });
         if (!res.ok) {
-          alert("삭제 권한이 없거나 실패했습니다.");
+          alert("삭제에 실패했습니다.");
+          return;
+        }
+        await loadRecords();
+      });
+    });
+
+    container.querySelectorAll("[data-edit-vet]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const li = container.querySelector(`li[data-record-id="${btn.dataset.editVet}"]`);
+        li.querySelector(".record-view").hidden = true;
+        li.querySelector(".record-edit-form").hidden = false;
+      });
+    });
+
+    container.querySelectorAll("[data-cancel-edit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const li = container.querySelector(`li[data-record-id="${btn.dataset.cancelEdit}"]`);
+        li.querySelector(".record-view").hidden = false;
+        li.querySelector(".record-edit-form").hidden = true;
+      });
+    });
+
+    container.querySelectorAll(".record-edit-form").forEach((form) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = form.dataset.editForm;
+        const field = (name) => form.querySelector(`[data-field="${name}"]`).value;
+        const payload = {
+          date: field("date"),
+          cat: field("cat"),
+          notes: field("notes").trim(),
+        };
+        const res = await fetch(`/api/vet-records/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...adminHeaders() },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          alert("수정에 실패했습니다.");
           return;
         }
         await loadRecords();
@@ -98,7 +161,7 @@
       return;
     }
     ul.innerHTML = list.map((r) => renderRecordItem(r, false)).join("");
-    bindDeleteButtons(ul);
+    bindRecordActions(ul);
   }
 
   function renderAllRecords() {
@@ -109,7 +172,7 @@
       return;
     }
     ul.innerHTML = sorted.slice(0, 30).map((r) => renderRecordItem(r, true)).join("");
-    bindDeleteButtons(ul);
+    bindRecordActions(ul);
   }
 
   function initControls() {

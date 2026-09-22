@@ -230,7 +230,7 @@ app.post("/api/meeting-reservations", (req, res) => {
   res.status(201).json(record);
 });
 
-app.delete("/api/meeting-reservations/:id", (req, res) => {
+app.delete("/api/meeting-reservations/:id", requireAdmin, (req, res) => {
   const ok = db.removeFromList("meeting-reservations", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
 });
@@ -251,7 +251,7 @@ app.post("/api/vehicle-reservations", (req, res) => {
   res.status(201).json(record);
 });
 
-app.delete("/api/vehicle-reservations/:id", (req, res) => {
+app.delete("/api/vehicle-reservations/:id", requireAdmin, (req, res) => {
   const ok = db.removeFromList("vehicle-reservations", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
 });
@@ -434,7 +434,16 @@ app.post("/api/vet-records", (req, res) => {
   res.status(201).json(record);
 });
 
-app.delete("/api/vet-records/:id", requireAdmin, (req, res) => {
+app.put("/api/vet-records/:id", (req, res) => {
+  const { date, cat, notes } = req.body;
+  if (!date || !cat || !notes) {
+    return res.status(400).json({ error: "필수 항목이 누락되었습니다." });
+  }
+  const updated = db.updateInList("vet-records", req.params.id, { date, cat, notes });
+  res.status(updated ? 200 : 404).json(updated || { ok: false });
+});
+
+app.delete("/api/vet-records/:id", (req, res) => {
   const ok = db.removeFromList("vet-records", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
 });
