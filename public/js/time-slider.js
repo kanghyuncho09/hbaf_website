@@ -45,7 +45,10 @@ function createTimeSlider(opts) {
   }
 
   function effectiveMin() {
-    return pastUntil !== null ? Math.max(startMin, pastUntil) : startMin;
+    if (pastUntil === null) return startMin;
+    // 분 단위로 딱 떨어지지 않는 "지금 시각"도 10분 단위 스텝에 맞춰 올림한다.
+    const rounded = Math.ceil(pastUntil / step) * step;
+    return Math.max(startMin, rounded);
   }
 
   function isDayFullyPast() {
@@ -156,31 +159,49 @@ function createTimeSlider(opts) {
     const min = minuteFromClientX(e.clientX);
     const distStart = Math.abs(min - selStart);
     const distEnd = Math.abs(min - selEnd);
-    if (distStart <= distEnd) tryMoveStart(min);
+    const wantStart = distStart <= distEnd;
+    const testLo = Math.min(wantStart ? min : selStart, wantStart ? selEnd : min);
+    const testHi = Math.max(wantStart ? min : selStart, wantStart ? selEnd : min);
+    // 클릭한 지점이 기존 선택 구간과 이어져 있지 않고(예: 이미 예약된 시간대
+    // 건너편), 핸들 하나만 옮기면 그 사이에 낀 예약과 겹쳐서 막히는 경우엔
+    // 핸들을 옮기는 대신 클릭한 지점 근처로 선택 구간을 통째로 새로 잡는다.
+    if (overlapsBooked(testLo, testHi)) {
+      selectNearPoint(min);
+      return;
+    }
+    if (wantStart) tryMoveStart(min);
     else tryMoveEnd(min);
   });
 
-  function pickDefaultRange() {
-    let s = effectiveMin();
-    if (s > endMin - step) {
-      selStart = endMin - step;
-      selEnd = endMin;
-      return;
-    }
+  // 예약된 시간대와 겹치지 않는, 기준점 이후의 가장 가까운 30분(또는 남은
+  // 시간이 그보다 짧으면 그만큼) 구간을 찾는다.
+  function nextFreeRange(from) {
+    let s = Math.max(startMin, from);
+    if (s > endMin - step) return { start: endMin - step, end: endMin };
     let e = Math.min(s + step * 3, endMin);
     let guard = 0;
     while (overlapsBooked(s, e) && guard < 300) {
       s += step;
       e = Math.min(s + step * 3, endMin);
       guard++;
-      if (s >= endMin - step) {
-        s = endMin - step;
-        e = endMin;
-        break;
-      }
+      if (s >= endMin - step) return { start: endMin - step, end: endMin };
     }
-    selStart = s;
-    selEnd = e;
+    return { start: s, end: e };
+  }
+
+  function pickDefaultRange() {
+    const range = nextFreeRange(effectiveMin());
+    selStart = range.start;
+    selEnd = range.end;
+  }
+
+  function selectNearPoint(min) {
+    const clamped = Math.max(effectiveMin(), Math.min(min, endMin));
+    const range = nextFreeRange(clamped);
+    selStart = range.start;
+    selEnd = range.end;
+    render();
+    emitChange();
   }
 
   return {
