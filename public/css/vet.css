@@ -67,6 +67,24 @@
   text-align: center;
 }
 
+.vet-cal-cell.is-holiday .vet-cal-daynum {
+  color: var(--danger);
+}
+
+.vet-cal-cell.is-holiday.is-selected .vet-cal-daynum {
+  color: var(--dark);
+}
+
+.vet-cal-holiday {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--danger);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .vet-cal-preview {
   margin-top: 4px;
   display: flex;
