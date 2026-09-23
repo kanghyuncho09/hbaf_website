@@ -173,20 +173,40 @@ function createTimeSlider(opts) {
     else tryMoveEnd(min);
   });
 
-  // 예약된 시간대와 겹치지 않는, 기준점 이후의 가장 가까운 30분(또는 남은
-  // 시간이 그보다 짧으면 그만큼) 구간을 찾는다.
+  // 기준점(from) 이후로 예약과 안 겹치는 가장 가까운 구간을 찾는다. 그 지점부터
+  // 다음 예약 시작 전까지 비는 틈이 30분보다 좁으면(예: 지금부터 다음 예약까지
+  // 20분밖에 안 남은 경우) 30분을 채우려고 그 틈을 건너뛰지 않고, 그 틈 안에서
+  // 잡을 수 있는 만큼만 잡는다.
   function nextFreeRange(from) {
     let s = Math.max(startMin, from);
-    if (s > endMin - step) return { start: endMin - step, end: endMin };
-    let e = Math.min(s + step * 3, endMin);
     let guard = 0;
-    while (overlapsBooked(s, e) && guard < 300) {
-      s += step;
-      e = Math.min(s + step * 3, endMin);
-      guard++;
-      if (s >= endMin - step) return { start: endMin - step, end: endMin };
+    while (guard < 300) {
+      if (s > endMin - step) return { start: endMin - step, end: endMin };
+
+      const containing = bookedRanges.find((r) => s >= r.start && s < r.end);
+      if (containing) {
+        s = containing.end;
+        guard++;
+        continue;
+      }
+
+      const upcoming = bookedRanges
+        .filter((r) => r.start >= s)
+        .sort((a, b) => a.start - b.start)[0];
+      const gapEnd = upcoming ? Math.min(upcoming.start, endMin) : endMin;
+
+      if (gapEnd - s < step) {
+        // 이 지점부터는 한 칸(step)도 못 잡을 만큼 좁으니 다음 예약이 끝난
+        // 뒤로 건너뛴다.
+        if (!upcoming) return { start: endMin - step, end: endMin };
+        s = upcoming.end;
+        guard++;
+        continue;
+      }
+
+      return { start: s, end: Math.min(s + step * 3, gapEnd) };
     }
-    return { start: s, end: e };
+    return { start: endMin - step, end: endMin };
   }
 
   function pickDefaultRange() {
