@@ -131,7 +131,7 @@
     state.reservations = all.filter((r) => r.date === state.date && r.vehicleId === state.vehicle);
     renderVehicleGrid();
     slider.init(bookedRangesForSlider(), pastUntilForSelectedDate());
-    renderReservationList(all.filter((r) => r.date === state.date));
+    renderReservationList(state.reservations);
   }
 
   async function refreshReservations() {
@@ -141,13 +141,16 @@
     state.reservations = all.filter((r) => r.date === state.date && r.vehicleId === state.vehicle);
     renderVehicleGrid();
     slider.refresh(bookedRangesForSlider(), pastUntilForSelectedDate());
-    renderReservationList(all.filter((r) => r.date === state.date));
+    renderReservationList(state.reservations);
   }
 
   function renderReservationList(list) {
     const ul = document.getElementById("vehReservationList");
+    const isToday = state.date === todayStr();
+    document.getElementById("vehReservationTitle").textContent =
+      `${VEHICLES[state.vehicle]} ${isToday ? "오늘의" : state.date.slice(5).replace("-", "/")} 예약 현황`;
     if (!list.length) {
-      ul.innerHTML = `<li class="empty-state">이 날짜에 등록된 예약이 없습니다.</li>`;
+      ul.innerHTML = `<li class="empty-state">이 차량은 이 날짜에 등록된 예약이 없습니다.</li>`;
       return;
     }
     const admin = isAdmin();
@@ -158,7 +161,7 @@
         (r) => `
         <li>
           <span class="r-time">${r.start}~${r.end}</span>
-          <span class="r-meta">${r.vehicleName} · ${r.name}${r.dept ? " (" + r.dept + ")" : ""}
+          <span class="r-meta">${r.name}${r.dept ? " (" + r.dept + ")" : ""}
             ${r.destination ? `<small>목적지: ${r.destination}</small>` : ""}
           </span>
           ${admin ? `<button class="cancel-btn" data-id="${r.id}">취소</button>` : ""}
