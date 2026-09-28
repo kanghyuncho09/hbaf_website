@@ -205,3 +205,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+.cleanup-preview__list li strong small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gray-500);
+}
+
+.cleanup-preview__list li.is-current {
+  background: var(--yellow);
+}
+
+.cleanup-preview__list li.is-current strong,
+.cleanup-preview__list li.is-current strong small {
+  color: var(--dark);
+}

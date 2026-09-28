@@ -252,3 +252,19 @@
     justify-items: center;
   }
 }
+
+.cleaning-table .week-range {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-500);
+}
+
+.cleaning-table tr.is-current-week td {
+  background: #fff3bf;
+}
+
+.cleaning-table tr.is-current-week td:first-child {
+  background: var(--yellow);
+}

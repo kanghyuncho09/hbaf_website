@@ -111,17 +111,51 @@ function bindAdminToggle() {
   updateAdminToggleUI();
 }
 
+// 청소분담표 주차는 월~금 기준이고, 수요일이 그 달에 속하는 주만 그 달의 주차로
+// 센다(주가 달을 걸칠 때 한 주가 두 달에 중복되지 않게). 예: 2026년 9월은
+// 1주차 8/31~9/4 … 5주차 9/28~10/2, 10월은 1주차가 10/5~10/9부터 시작한다.
+// 수요일이 그 달에 있는 주가 4개뿐인 달은 5주차 줄을 보여주지 않는다.
+function cleaningWeekRows(data) {
+  const year = new Date().getFullYear();
+  const firstWedDate = 1 + ((3 - new Date(year, data.month - 1, 1).getDay() + 7) % 7);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return [1, 2, 3, 4, 5]
+    .map((n) => {
+      const mon = new Date(year, data.month - 1, firstWedDate - 2 + (n - 1) * 7);
+      const wed = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 2);
+      const fri = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 4);
+      const nextMon = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 7);
+      const label = `${n}주차`;
+      return {
+        label,
+        inMonth: wed.getMonth() === data.month - 1,
+        team: (data.care && data.care[label]) || "",
+        range: `${mon.getMonth() + 1}/${mon.getDate()}~${fri.getMonth() + 1}/${fri.getDate()}`,
+        isCurrent: today >= mon && today < nextMon,
+      };
+    })
+    .filter((w) => w.inMonth);
+}
+
 async function loadCleanupPreview() {
   const el = document.getElementById("cleanupPreview");
   try {
     const res = await fetch("/api/cleaning-schedule");
     const data = await res.json();
-    const rows = [...Object.entries(data.pantry || {}), ...Object.entries(data.care || {})];
+    const pantryRows = Object.entries(data.pantry || {})
+      .map(([label, team]) => `<li><strong>${label}</strong><span>${team || "-"}</span></li>`)
+      .join("");
+    const weekRows = cleaningWeekRows(data)
+      .map(
+        (w) =>
+          `<li class="${w.isCurrent ? "is-current" : ""}"><strong>${w.label}<small>${w.range}</small></strong><span>${w.team || "-"}</span></li>`
+      )
+      .join("");
     el.innerHTML = `
       <p class="cleanup-preview__week">( ${data.month} )월 담당 안내</p>
-      <ul class="cleanup-preview__list">
-        ${rows.map(([label, team]) => `<li><strong>${label}</strong><span>${team}</span></li>`).join("")}
-      </ul>
+      <ul class="cleanup-preview__list">${pantryRows}${weekRows}</ul>
     `;
   } catch (e) {
     el.innerHTML = `<p class="empty-state">청소분담표를 불러오지 못했습니다.</p>`;

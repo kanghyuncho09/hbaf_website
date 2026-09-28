@@ -32,7 +32,15 @@
   function renderCleaningTables() {
     document.getElementById("cleaningMonthLabel").textContent = `( ${cleaningData.month} )월`;
     renderAssignTable("pantryTable", Object.entries(cleaningData.pantry || {}));
-    renderAssignTable("careTable", Object.entries(cleaningData.care || {}));
+    document.getElementById("careTable").innerHTML = `
+      <tr><th>구분</th><th>담당부서</th></tr>
+      ${cleaningWeekRows(cleaningData)
+        .map(
+          (w) =>
+            `<tr class="${w.isCurrent ? "is-current-week" : ""}"><td>${w.label}<span class="week-range">(${w.range})</span></td><td>${escapeHtml(w.team || "-")}</td></tr>`
+        )
+        .join("")}
+    `;
     const noteEl = document.getElementById("pantryNoteLabel");
     noteEl.textContent = cleaningData.pantryNote ? `* ${cleaningData.pantryNote}` : "";
   }
@@ -46,6 +54,7 @@
     document.getElementById("careWeek2Input").value = cleaningData.care?.["2주차"] || "";
     document.getElementById("careWeek3Input").value = cleaningData.care?.["3주차"] || "";
     document.getElementById("careWeek4Input").value = cleaningData.care?.["4주차"] || "";
+    document.getElementById("careWeek5Input").value = cleaningData.care?.["5주차"] || "";
     document.getElementById("cleaningForm").style.display = "block";
   }
 
@@ -76,6 +85,7 @@
           "2주차": document.getElementById("careWeek2Input").value.trim(),
           "3주차": document.getElementById("careWeek3Input").value.trim(),
           "4주차": document.getElementById("careWeek4Input").value.trim(),
+          "5주차": document.getElementById("careWeek5Input").value.trim(),
         },
       };
       const res = await fetch("/api/cleaning-schedule", {
