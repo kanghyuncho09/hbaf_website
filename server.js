@@ -16,6 +16,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use((req, res, next) => {
   if (!req.path.startsWith("/api/")) return next();
   if (req.path.startsWith("/api/auth/") || req.path.startsWith("/api/admin/")) return next();
+  if (req.path.startsWith("/api/public/")) return next();
   return requireUser(req, res, next);
 });
 
@@ -233,6 +234,31 @@ app.post("/api/meeting-reservations", (req, res) => {
 app.delete("/api/meeting-reservations/:id", requireAdmin, (req, res) => {
   const ok = db.removeFromList("meeting-reservations", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
+});
+
+// 회의실 문 앞 QR코드용 공개 API (로그인 불필요). 링크를 아는 누구나 볼 수 있으므로
+// 오늘 날짜의 원형회의실 예약 시간/예약자/부서만 내려주고 회의 목적 등은 뺀다.
+// 서버(Render)는 UTC 시간대라서 날짜와 현재 시각은 항상 한국 시간으로 직접 계산한다.
+app.get("/api/public/room-today", (req, res) => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .formatToParts(new Date())
+    .reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {});
+  const date = `${parts.year}-${parts.month}-${parts.day}`;
+  const reservations = db
+    .readList("meeting-reservations")
+    .filter((r) => r.date === date && r.roomId === "room-1")
+    .map((r) => ({ start: r.start, end: r.end, name: r.name, dept: r.dept || "" }))
+    .sort((a, b) => a.start.localeCompare(b.start));
+  res.set("Cache-Control", "no-store");
+  res.json({ roomName: "원형회의실", date, now: `${parts.hour}:${parts.minute}`, reservations });
 });
 
 // ---------- 법인차량 예약 ----------

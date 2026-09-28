@@ -128,8 +128,16 @@ async function loadCleanupPreview() {
   }
 }
 
+// toISOString()은 UTC 기준이라 한국 시간 08:00~09:00에는 전날 날짜가 나온다.
+// 예약 날짜 계산은 반드시 이 함수(브라우저 로컬 시간 기준)를 쓴다.
+function localDateStr(d) {
+  const t = d || new Date();
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+}
+
 function startApp() {
-  navigateTo("home");
+  const requested = new URLSearchParams(location.search).get("view");
+  navigateTo(requested && document.getElementById("view-" + requested) ? requested : "home");
   loadCleanupPreview();
   document.dispatchEvent(new Event("layout:ready"));
 }

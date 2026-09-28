@@ -6,7 +6,7 @@
   const STEP = 10;
 
   const state = {
-    date: new Date().toISOString().slice(0, 10),
+    date: localDateStr(),
     reservations: [],
     allReservations: [],
   };
@@ -20,7 +20,7 @@
 
   function isRoomBusyNow() {
     const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
+    const todayStr = localDateStr(now);
     const nowMin = now.getHours() * 60 + now.getMinutes();
     return state.allReservations.some(
       (r) => r.roomId === ROOM_ID && r.date === todayStr && nowMin >= toMinutes(r.start) && nowMin < toMinutes(r.end)
@@ -37,7 +37,7 @@
   }
 
   function todayStr() {
-    return new Date().toISOString().slice(0, 10);
+    return localDateStr();
   }
 
   function pastUntilForSelectedDate() {

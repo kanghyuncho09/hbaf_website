@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>원형회의실 오늘 예약 현황</title>
+<link rel="icon" href="/assets/img/logo.png" type="image/png" />
+<style>
+  :root { --yellow:#ffc700; --dark:#212121; --gray-100:#f4f4f4; --gray-300:#d9d9d9; --gray-500:#767676; --gray-700:#4a4a4a; --danger:#e6544c; --success:#2f9e5b; --pink:#ffc9d1; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#fffae8; color:var(--dark); font-family:"Noto Sans KR","Malgun Gothic",-apple-system,sans-serif; padding:20px 16px 40px; }
+  .wrap { max-width:520px; margin:0 auto; }
+  header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  header img { height:28px; }
+  header span { font-size:14px; color:var(--gray-700); font-weight:600; }
+  h1 { font-size:24px; margin:4px 0 2px; }
+  .date { color:var(--gray-500); font-size:14px; margin:0 0 16px; }
+  .card { background:#fff; border-radius:16px; padding:20px; box-shadow:0 4px 16px rgba(33,33,33,.08); margin-bottom:16px; }
+  .status { border-radius:14px; padding:18px 16px; text-align:center; }
+  .status.is-free { background:#eafaf0; color:var(--success); }
+  .status.is-busy { background:#fdecea; color:var(--danger); }
+  .status__label { font-size:28px; font-weight:800; }
+  .status__detail { margin-top:6px; font-size:14px; color:var(--gray-700); font-weight:600; }
+  .track { position:relative; height:12px; border-radius:999px; background:var(--gray-100); margin:36px 8px 8px; }
+  .seg { position:absolute; top:0; height:100%; background:var(--pink); }
+  .now { position:absolute; top:-6px; width:3px; height:24px; background:var(--dark); border-radius:2px; transform:translateX(-50%); }
+  .now::after { content:"지금"; position:absolute; bottom:28px; left:50%; transform:translateX(-50%); font-size:11px; font-weight:700; background:var(--dark); color:#fff; padding:2px 7px; border-radius:999px; white-space:nowrap; }
+  .ticks { display:flex; justify-content:space-between; margin:0 8px; font-size:12px; color:var(--gray-500); }
+  h2 { font-size:16px; margin:0 0 6px; }
+  ul { list-style:none; margin:0; padding:0; }
+  li { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--gray-100); font-size:14px; }
+  li:last-child { border-bottom:none; }
+  li.is-now { background:#fff7d6; margin:0 -20px; padding-left:20px; padding-right:20px; }
+  .t { font-weight:700; min-width:96px; }
+  .m { color:var(--gray-700); }
+  .empty { text-align:center; color:var(--gray-500); padding:20px 0; }
+  .note { text-align:center; font-size:12px; color:var(--gray-500); }
+  .btn { display:block; text-align:center; background:var(--yellow); color:var(--dark); font-weight:700; border:2px solid var(--dark); border-radius:999px; padding:12px; text-decoration:none; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img src="/assets/img/logo.png" alt="HBAF" /><span>사내 공용업무 포털</span></header>
+  <h1>원형회의실</h1>
+  <p class="date" id="date">불러오는 중...</p>
+
+  <div class="card">
+    <div class="status is-free" id="status"><div class="status__label">확인 중...</div><div class="status__detail" id="detail"></div></div>
+    <div class="track" id="track"></div>
+    <div class="ticks"><span>08:00</span><span>12:30</span><span>17:00</span></div>
+  </div>
+
+  <div class="card">
+    <h2>오늘의 예약 현황</h2>
+    <ul id="list"></ul>
+  </div>
+
+  <a class="btn" href="/?view=meeting-room">회의실 예약하러 가기 (로그인 필요)</a>
+  <p class="note">1분마다 자동으로 새로고침됩니다.</p>
+</div>
+
+<script>
+  var START = 480, END = 1020;
+
+  function toMin(t) { var p = t.split(":"); return Number(p[0]) * 60 + Number(p[1]); }
+  function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+  function pct(min) { return ((Math.min(END, Math.max(START, min)) - START) / (END - START)) * 100; }
+
+  function render(data) {
+    var nowMin = toMin(data.now);
+    var list = data.reservations;
+    var d = new Date(data.date + "T00:00:00");
+    var days = ["일","월","화","수","목","금","토"];
+    document.getElementById("date").textContent =
+      data.date.replace(/-/g, ".") + " (" + days[d.getDay()] + ") · 현재 " + data.now + " 기준";
+
+    var current = list.filter(function (r) { return nowMin >= toMin(r.start) && nowMin < toMin(r.end); })[0];
+    var next = list.filter(function (r) { return toMin(r.start) > nowMin; })[0];
+    var statusEl = document.getElementById("status");
+    var detail = "";
+    if (current) {
+      statusEl.className = "status is-busy";
+      statusEl.firstChild.textContent = "사용중";
+      detail = current.end + "까지 · " + current.name + (current.dept ? " (" + current.dept + ")" : "");
+    } else {
+      statusEl.className = "status is-free";
+      statusEl.firstChild.textContent = "이용 가능";
+      detail = next ? "다음 예약 " + next.start + " · " + next.name : "오늘 남은 예약이 없어요";
+    }
+    document.getElementById("detail").textContent = detail;
+
+    var track = document.getElementById("track");
+    var html = list.map(function (r) {
+      var l = pct(toMin(r.start));
+      return '<div class="seg" style="left:' + l + '%;width:' + (pct(toMin(r.end)) - l) + '%"></div>';
+    }).join("");
+    if (nowMin >= START && nowMin <= END) html += '<div class="now" style="left:' + pct(nowMin) + '%"></div>';
+    track.innerHTML = html;
+
+    var ul = document.getElementById("list");
+    if (!list.length) { ul.innerHTML = '<li class="empty" style="display:block">오늘 등록된 예약이 없습니다.</li>'; return; }
+    ul.innerHTML = list.map(function (r) {
+      var on = nowMin >= toMin(r.start) && nowMin < toMin(r.end);
+      return '<li class="' + (on ? "is-now" : "") + '"><span class="t">' + esc(r.start) + " ~ " + esc(r.end) +
+        '</span><span class="m">' + esc(r.name) + (r.dept ? " (" + esc(r.dept) + ")" : "") + "</span></li>";
+    }).join("");
+  }
+
+  function load() {
+    fetch("/api/public/room-today", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(render)
+      .catch(function () {
+        document.getElementById("date").textContent = "현황을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
+      });
+  }
+  load();
+  setInterval(load, 60000);
+</script>
+</body>
+</html>
