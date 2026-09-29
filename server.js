@@ -68,6 +68,43 @@ db.ensureFile("game-scores", []);
 db.ensureFile("vet-records", []);
 db.ensureFile("suggestions", []);
 db.ensureFile("users", []);
+db.ensureFile("updates", [
+  {
+    id: 1,
+    createdAt: new Date().toISOString(),
+    content: "예약 사이에 좁게 남은 빈 시간대도 이제 정상적으로 선택할 수 있도록 고쳤어요.",
+  },
+  {
+    id: 2,
+    createdAt: new Date().toISOString(),
+    content: "법인차량 예약현황이 이제 선택한 차량별로 따로 정리돼서 보여요.",
+  },
+  {
+    id: 3,
+    createdAt: new Date().toISOString(),
+    content: "청소분담표가 5주차까지 확장되고, 주차별 담당 날짜 범위도 함께 표시돼요.",
+  },
+  {
+    id: 4,
+    createdAt: new Date().toISOString(),
+    content: "회의실 앞에 QR코드를 붙여두면, 로그인 없이 스캔만으로 그날 예약 현황을 바로 볼 수 있어요.",
+  },
+  {
+    id: 5,
+    createdAt: new Date().toISOString(),
+    content: "바프/베프 병원 기록 달력에도 공식 공휴일이 빨간색으로 표시돼요.",
+  },
+  {
+    id: 6,
+    createdAt: new Date().toISOString(),
+    content: "회의실/차량 예약은 이제 본인이 등록한 예약만 수정·취소할 수 있어요. (관리자는 모든 예약을 관리할 수 있어요)",
+  },
+  {
+    id: 7,
+    createdAt: new Date().toISOString(),
+    content: "예약 날짜를 고를 때 달력에 공휴일이 빨간색으로 표시되고, 공휴일에는 예약이 자동으로 막혀요.",
+  },
+]);
 
 // 로그인 토큰 서명에 쓰는 비밀키. 파일로 저장해두면(퍼시스턴트 디스크에 보관되므로)
 // 서버가 재배포/재시작돼도 같은 키를 계속 쓸 수 있어 로그인이 풀리지 않는다.
@@ -587,6 +624,27 @@ app.post("/api/suggestions", (req, res) => {
 
 app.delete("/api/suggestions/:id", requireAdmin, (req, res) => {
   const ok = db.removeFromList("suggestions", req.params.id);
+  res.status(ok ? 200 : 404).json({ ok });
+});
+
+// ---------- 업데이트 소식 (관리자가 작성, 홈화면에 공지) ----------
+app.get("/api/updates", (req, res) => {
+  const list = db.readList("updates").sort((a, b) => b.id - a.id);
+  res.json(list);
+});
+
+app.post("/api/updates", requireAdmin, (req, res) => {
+  const { content } = req.body;
+  const cleanContent = String(content || "").trim().slice(0, 300);
+  if (!cleanContent) {
+    return res.status(400).json({ error: "업데이트 내용을 입력해주세요." });
+  }
+  const record = db.appendToList("updates", { content: cleanContent });
+  res.status(201).json(record);
+});
+
+app.delete("/api/updates/:id", requireAdmin, (req, res) => {
+  const ok = db.removeFromList("updates", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
 });
 

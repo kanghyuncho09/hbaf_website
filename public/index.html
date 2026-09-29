@@ -156,7 +156,7 @@
       </div>
     </section>
 
-    <section class="container suggestion-preview">
+    <section class="container suggestion-preview home-bottom-grid">
       <div class="card suggestion-preview__card">
         <div class="notice-preview__head">
           <div>
@@ -166,6 +166,20 @@
           <a href="#" class="btn btn--sm btn--outline" data-view="suggestions">전체 보기</a>
         </div>
         <div id="suggestionPreview" class="sticky-preview-wall">불러오는 중...</div>
+      </div>
+
+      <div class="card">
+        <div class="notice-preview__head">
+          <div>
+            <h2>📢 업데이트 소식</h2>
+            <p class="panel-sub">포털이 업데이트될 때마다 여기서 알려드려요</p>
+          </div>
+        </div>
+        <form id="updateForm" class="update-form" hidden>
+          <textarea id="updateContent" rows="2" maxlength="300" placeholder="예: 회의실 예약 날짜 선택 시 공휴일이 빨간색으로 표시돼요."></textarea>
+          <button type="submit" class="btn btn--sm">소식 등록</button>
+        </form>
+        <ul id="updateList" class="post-list update-list">불러오는 중...</ul>
       </div>
     </section>
   </section>
@@ -747,6 +761,7 @@
 <script src="/js/game.js"></script>
 <script src="/js/vet.js"></script>
 <script src="/js/suggestions.js"></script>
+<script src="/js/updates.js"></script>
 <script src="/js/admin-users.js"></script>
 </body>
 </html>
