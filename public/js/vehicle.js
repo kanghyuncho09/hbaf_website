@@ -456,8 +456,14 @@
   }
 
   function initControls() {
-    const dateInput = document.getElementById("vehDateInput");
-    dateInput.value = state.date;
+    createDatePicker({
+      root: document.getElementById("vehDatePicker"),
+      initialDate: state.date,
+      onSelect: (dateStr) => {
+        state.date = dateStr;
+        loadReservations();
+      },
+    });
     document.getElementById("vehSelectedVehicleLabel").textContent = VEHICLES[state.vehicle];
 
     const nameInput = document.getElementById("vehUserName");
@@ -467,11 +473,6 @@
     logVehicle.innerHTML = Object.entries(VEHICLES)
       .map(([id, name]) => `<option value="${id}">${name}</option>`)
       .join("");
-
-    dateInput.addEventListener("change", () => {
-      state.date = dateInput.value;
-      loadReservations();
-    });
 
     document.getElementById("vehReservationForm").addEventListener("submit", async (e) => {
       e.preventDefault();

@@ -234,16 +234,17 @@
   }
 
   function initControls() {
-    const dateInput = document.getElementById("mrDateInput");
-    dateInput.value = state.date;
+    createDatePicker({
+      root: document.getElementById("mrDatePicker"),
+      initialDate: state.date,
+      onSelect: (dateStr) => {
+        state.date = dateStr;
+        loadReservations();
+      },
+    });
 
     const nameInput = document.getElementById("mrUserName");
     if (typeof getUserName === "function" && getUserName()) nameInput.value = getUserName();
-
-    dateInput.addEventListener("change", () => {
-      state.date = dateInput.value;
-      loadReservations();
-    });
 
     document.getElementById("mrReservationForm").addEventListener("submit", async (e) => {
       e.preventDefault();
