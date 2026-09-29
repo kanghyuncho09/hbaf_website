@@ -7,6 +7,26 @@ const db = require("./db");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 대한민국 공식 공휴일 (public/js/vet.js의 목록과 동일 — 매년 새로 확인해서 업데이트 필요).
+// 회의실/차량 예약이 공휴일에는 잡히지 않도록 서버에서도 막는다.
+const HOLIDAYS = new Set([
+  "2026-01-01", "2026-02-16", "2026-02-17", "2026-02-18", "2026-03-01", "2026-03-02",
+  "2026-05-05", "2026-05-24", "2026-05-25", "2026-06-06", "2026-07-17", "2026-08-15",
+  "2026-08-17", "2026-09-24", "2026-09-25", "2026-09-26", "2026-10-03", "2026-10-05",
+  "2026-10-09", "2026-12-25",
+]);
+
+function toMin(t) {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function overlapsExisting(list, start, end, excludeId) {
+  const s = toMin(start);
+  const e = toMin(end);
+  return list.some((r) => String(r.id) !== String(excludeId) && s < toMin(r.end) && e > toMin(r.start));
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -174,7 +194,7 @@ app.post("/api/auth/login", async (req, res) => {
     return res.status(403).json({ error: "가입이 승인되지 않았습니다. 관리자에게 문의해주세요." });
   }
   const token = signToken({ role: "user", id: user.id, name: user.name, username: user.username });
-  res.json({ token, name: user.name });
+  res.json({ token, name: user.name, username: user.username });
 });
 
 app.post("/api/auth/logout", (req, res) => {
@@ -225,13 +245,49 @@ app.post("/api/meeting-reservations", (req, res) => {
   if (!date || !roomId || !start || !end || !name) {
     return res.status(400).json({ error: "필수 항목이 누락되었습니다." });
   }
+  if (HOLIDAYS.has(date)) {
+    return res.status(400).json({ error: "공휴일에는 예약할 수 없습니다." });
+  }
+  const sameDay = db.readList("meeting-reservations").filter((r) => r.date === date && r.roomId === roomId);
+  if (overlapsExisting(sameDay, start, end)) {
+    return res.status(409).json({ error: "이미 예약된 시간대와 겹칩니다." });
+  }
   const record = db.appendToList("meeting-reservations", {
-    date, roomId, roomName, start, end, name, dept, purpose,
+    date, roomId, roomName, start, end, name, dept, purpose, username: req.user.username,
   });
   res.status(201).json(record);
 });
 
-app.delete("/api/meeting-reservations/:id", requireAdmin, (req, res) => {
+app.put("/api/meeting-reservations/:id", (req, res) => {
+  const all = db.readList("meeting-reservations");
+  const existing = all.find((r) => String(r.id) === String(req.params.id));
+  if (!existing) return res.status(404).json({ error: "예약을 찾을 수 없습니다." });
+  const isOwner = existing.username && existing.username === req.user.username;
+  if (!isOwner && req.user.id !== "admin") {
+    return res.status(403).json({ error: "본인이 등록한 예약만 수정할 수 있습니다." });
+  }
+  const { date, start, end, name, dept, purpose } = req.body;
+  if (!date || !start || !end || !name) {
+    return res.status(400).json({ error: "필수 항목이 누락되었습니다." });
+  }
+  if (HOLIDAYS.has(date)) {
+    return res.status(400).json({ error: "공휴일에는 예약할 수 없습니다." });
+  }
+  const sameDay = all.filter((r) => r.date === date && r.roomId === existing.roomId);
+  if (overlapsExisting(sameDay, start, end, existing.id)) {
+    return res.status(409).json({ error: "이미 예약된 시간대와 겹칩니다." });
+  }
+  const updated = db.updateInList("meeting-reservations", req.params.id, { date, start, end, name, dept, purpose });
+  res.json(updated);
+});
+
+app.delete("/api/meeting-reservations/:id", (req, res) => {
+  const existing = db.readList("meeting-reservations").find((r) => String(r.id) === String(req.params.id));
+  if (!existing) return res.status(404).json({ ok: false });
+  const isOwner = existing.username && existing.username === req.user.username;
+  if (!isOwner && req.user.id !== "admin") {
+    return res.status(403).json({ error: "본인이 등록한 예약만 취소할 수 있습니다." });
+  }
   const ok = db.removeFromList("meeting-reservations", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
 });
@@ -271,13 +327,49 @@ app.post("/api/vehicle-reservations", (req, res) => {
   if (!date || !vehicleId || !start || !end || !name) {
     return res.status(400).json({ error: "필수 항목이 누락되었습니다." });
   }
+  if (HOLIDAYS.has(date)) {
+    return res.status(400).json({ error: "공휴일에는 예약할 수 없습니다." });
+  }
+  const sameDay = db.readList("vehicle-reservations").filter((r) => r.date === date && r.vehicleId === vehicleId);
+  if (overlapsExisting(sameDay, start, end)) {
+    return res.status(409).json({ error: "이미 예약된 시간대와 겹칩니다." });
+  }
   const record = db.appendToList("vehicle-reservations", {
-    date, vehicleId, vehicleName, start, end, name, dept, destination,
+    date, vehicleId, vehicleName, start, end, name, dept, destination, username: req.user.username,
   });
   res.status(201).json(record);
 });
 
-app.delete("/api/vehicle-reservations/:id", requireAdmin, (req, res) => {
+app.put("/api/vehicle-reservations/:id", (req, res) => {
+  const all = db.readList("vehicle-reservations");
+  const existing = all.find((r) => String(r.id) === String(req.params.id));
+  if (!existing) return res.status(404).json({ error: "예약을 찾을 수 없습니다." });
+  const isOwner = existing.username && existing.username === req.user.username;
+  if (!isOwner && req.user.id !== "admin") {
+    return res.status(403).json({ error: "본인이 등록한 예약만 수정할 수 있습니다." });
+  }
+  const { date, start, end, name, dept, destination } = req.body;
+  if (!date || !start || !end || !name) {
+    return res.status(400).json({ error: "필수 항목이 누락되었습니다." });
+  }
+  if (HOLIDAYS.has(date)) {
+    return res.status(400).json({ error: "공휴일에는 예약할 수 없습니다." });
+  }
+  const sameDay = all.filter((r) => r.date === date && r.vehicleId === existing.vehicleId);
+  if (overlapsExisting(sameDay, start, end, existing.id)) {
+    return res.status(409).json({ error: "이미 예약된 시간대와 겹칩니다." });
+  }
+  const updated = db.updateInList("vehicle-reservations", req.params.id, { date, start, end, name, dept, destination });
+  res.json(updated);
+});
+
+app.delete("/api/vehicle-reservations/:id", (req, res) => {
+  const existing = db.readList("vehicle-reservations").find((r) => String(r.id) === String(req.params.id));
+  if (!existing) return res.status(404).json({ ok: false });
+  const isOwner = existing.username && existing.username === req.user.username;
+  if (!isOwner && req.user.id !== "admin") {
+    return res.status(403).json({ error: "본인이 등록한 예약만 취소할 수 있습니다." });
+  }
   const ok = db.removeFromList("vehicle-reservations", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
 });

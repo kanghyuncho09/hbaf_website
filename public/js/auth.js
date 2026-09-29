@@ -1,6 +1,7 @@
 (function () {
   const TOKEN_KEY = "hbaf-user-token";
   const NAME_KEY = "hbaf-user-name";
+  const USERNAME_KEY = "hbaf-user-username";
 
   // 모든 /api/ 요청에 로그인 토큰을 자동으로 붙여준다. 이렇게 해두면 기존의
   // meeting-room.js / vehicle.js / board.js 등 다른 파일들을 일일이 고치지 않아도
@@ -39,6 +40,14 @@
   function getUserName() {
     try {
       return localStorage.getItem(NAME_KEY) || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function getUsername() {
+    try {
+      return localStorage.getItem(USERNAME_KEY) || "";
     } catch (e) {
       return "";
     }
@@ -88,12 +97,14 @@
       if (!res.ok) throw new Error("unauthorized");
       const user = await res.json();
       localStorage.setItem(NAME_KEY, user.name);
+      if (user.username) localStorage.setItem(USERNAME_KEY, user.username);
       hideGate();
       startApp();
     } catch (e) {
       try {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(NAME_KEY);
+        localStorage.removeItem(USERNAME_KEY);
       } catch (err) {}
       if (typeof isAdmin === "function" && isAdmin()) {
         hideGate();
@@ -137,6 +148,7 @@
         }
         localStorage.setItem(TOKEN_KEY, data.token);
         localStorage.setItem(NAME_KEY, data.name);
+        if (data.username) localStorage.setItem(USERNAME_KEY, data.username);
         hideGate();
         startApp();
       } catch (err) {
@@ -178,6 +190,7 @@
       try {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(NAME_KEY);
+        localStorage.removeItem(USERNAME_KEY);
       } catch (err) {}
       location.reload();
     });
@@ -217,4 +230,5 @@
 
   window.getUserToken = getUserToken;
   window.getUserName = getUserName;
+  window.getUsername = getUsername;
 })();

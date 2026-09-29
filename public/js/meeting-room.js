@@ -67,7 +67,13 @@
 
     const statusEl = document.getElementById("mrSliderStatus");
     const submitBtn = document.getElementById("mrSubmitBtn");
-    if (slider.isDayFullyPast()) {
+    const holidayName = HOLIDAYS[state.date];
+    if (holidayName) {
+      statusEl.textContent = `공휴일(${holidayName})에는 예약할 수 없습니다.`;
+      statusEl.classList.add("is-warning");
+      slider.setDisabled(true);
+      submitBtn.disabled = true;
+    } else if (slider.isDayFullyPast()) {
       statusEl.textContent = "오늘은 예약 가능한 시간이 지났습니다. 다른 날짜를 선택해주세요.";
       statusEl.classList.add("is-warning");
       slider.setDisabled(true);
@@ -115,6 +121,12 @@
     renderStatusBadge();
   }
 
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str ?? "";
+    return div.innerHTML;
+  }
+
   function renderReservationList(list) {
     const ul = document.getElementById("mrReservationList");
     if (!list.length) {
@@ -122,19 +134,46 @@
       return;
     }
     const admin = isAdmin();
+    const myUsername = typeof getUsername === "function" ? getUsername() : "";
     ul.innerHTML = list
       .slice()
       .sort((a, b) => a.start.localeCompare(b.start))
-      .map(
-        (r) => `
-        <li>
-          <span class="r-time">${r.start}~${r.end}</span>
-          <span class="r-meta">${r.name}${r.dept ? " (" + r.dept + ")" : ""}
-            ${r.purpose ? `<small>${r.purpose}</small>` : ""}
-          </span>
-          ${admin ? `<button class="cancel-btn" data-id="${r.id}">취소</button>` : ""}
-        </li>`
-      )
+      .map((r) => {
+        const canManage = admin || (myUsername && r.username === myUsername);
+        return `
+        <li data-res-id="${r.id}">
+          <div class="res-view">
+            <span class="r-time">${r.start}~${r.end}</span>
+            <span class="r-meta">${escapeHtml(r.name)}${r.dept ? " (" + escapeHtml(r.dept) + ")" : ""}
+              ${r.purpose ? `<small>${escapeHtml(r.purpose)}</small>` : ""}
+            </span>
+            ${
+              canManage
+                ? `<span class="res-actions"><button type="button" class="edit-btn" data-id="${r.id}">수정</button><button type="button" class="cancel-btn" data-id="${r.id}">취소</button></span>`
+                : ""
+            }
+          </div>
+          ${
+            canManage
+              ? `<form class="res-edit-form" data-edit-id="${r.id}" hidden>
+                  <div class="form-grid">
+                    <div class="form-row"><label>시작</label><input type="time" data-field="start" value="${r.start}" min="08:00" max="16:50" step="600" required /></div>
+                    <div class="form-row"><label>종료</label><input type="time" data-field="end" value="${r.end}" min="08:10" max="17:00" step="600" required /></div>
+                  </div>
+                  <div class="form-grid">
+                    <div class="form-row"><label>예약자</label><input type="text" data-field="name" value="${escapeHtml(r.name)}" required /></div>
+                    <div class="form-row"><label>부서</label><input type="text" data-field="dept" value="${escapeHtml(r.dept || "")}" /></div>
+                  </div>
+                  <div class="form-row"><label>회의 목적</label><input type="text" data-field="purpose" value="${escapeHtml(r.purpose || "")}" /></div>
+                  <div class="form-actions">
+                    <button type="submit" class="btn btn--sm">저장</button>
+                    <button type="button" class="btn btn--sm btn--outline" data-cancel-edit="${r.id}">취소</button>
+                  </div>
+                </form>`
+              : ""
+          }
+        </li>`;
+      })
       .join("");
 
     ul.querySelectorAll(".cancel-btn").forEach((btn) => {
@@ -145,7 +184,48 @@
           headers: adminHeaders(),
         });
         if (!res.ok) {
-          alert("취소 권한이 없거나 실패했습니다.");
+          const err = await res.json().catch(() => ({}));
+          alert(err.error || "취소 권한이 없거나 실패했습니다.");
+          return;
+        }
+        loadReservations();
+      });
+    });
+
+    ul.querySelectorAll(".edit-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const li = ul.querySelector(`li[data-res-id="${btn.dataset.id}"]`);
+        li.querySelector(".res-view").hidden = true;
+        li.querySelector(".res-edit-form").hidden = false;
+      });
+    });
+
+    ul.querySelectorAll("[data-cancel-edit]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const li = ul.querySelector(`li[data-res-id="${btn.dataset.cancelEdit}"]`);
+        li.querySelector(".res-view").hidden = false;
+        li.querySelector(".res-edit-form").hidden = true;
+      });
+    });
+
+    ul.querySelectorAll(".res-edit-form").forEach((form) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const field = (n) => form.querySelector(`[data-field="${n}"]`).value.trim();
+        const start = field("start");
+        const end = field("end");
+        if (start >= end) {
+          alert("종료 시각은 시작 시각보다 늦어야 합니다.");
+          return;
+        }
+        const res = await fetch(`/api/meeting-reservations/${form.dataset.editId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...adminHeaders() },
+          body: JSON.stringify({ date: state.date, start, end, name: field("name"), dept: field("dept"), purpose: field("purpose") }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert(err.error || "수정에 실패했습니다.");
           return;
         }
         loadReservations();
@@ -157,6 +237,9 @@
     const dateInput = document.getElementById("mrDateInput");
     dateInput.value = state.date;
 
+    const nameInput = document.getElementById("mrUserName");
+    if (typeof getUserName === "function" && getUserName()) nameInput.value = getUserName();
+
     dateInput.addEventListener("change", () => {
       state.date = dateInput.value;
       loadReservations();
@@ -166,6 +249,10 @@
       e.preventDefault();
       const name = document.getElementById("mrUserName").value.trim();
       if (!name) return;
+      if (HOLIDAYS[state.date]) {
+        alert(`공휴일(${HOLIDAYS[state.date]})에는 예약할 수 없습니다.`);
+        return;
+      }
       if (slider.isDayFullyPast()) {
         alert("오늘은 예약 가능한 시간이 지났습니다. 다른 날짜를 선택해주세요.");
         return;
@@ -196,6 +283,7 @@
       }
 
       document.getElementById("mrReservationForm").reset();
+      if (typeof getUserName === "function" && getUserName()) nameInput.value = getUserName();
       loadReservations();
     });
   }

@@ -219,10 +219,6 @@
 }
 
 .reservation-items li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
   padding: 12px 0;
   border-bottom: 1px solid var(--gray-100);
   font-size: 14px;
@@ -230,6 +226,13 @@
 
 .reservation-items li:last-child {
   border-bottom: none;
+}
+
+.reservation-items .res-view {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
 
 .reservation-items .r-time {
@@ -247,12 +250,26 @@
   color: var(--gray-500);
 }
 
-.cancel-btn {
+.res-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cancel-btn,
+.edit-btn {
   border: none;
   background: none;
   color: var(--gray-500);
   font-size: 12px;
   text-decoration: underline;
+  cursor: pointer;
+}
+
+.reservation-items .res-edit-form {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--gray-300);
 }
 
 @media (max-width: 900px) {
