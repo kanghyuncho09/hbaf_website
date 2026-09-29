@@ -1,7 +1,8 @@
 .hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(155deg, #14110b 0%, #241c0e 42%, #3a2c10 78%, #4a3712 100%);
+  background: url("/assets/img/hero-banner.webp") center / cover no-repeat;
+  aspect-ratio: 2000 / 667;
   border-bottom: 1px solid rgba(245, 200, 74, 0.35);
 }
 
@@ -10,34 +11,41 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 84% 12%, rgba(255, 199, 0, 0.30), transparent 55%),
-    radial-gradient(circle at 10% 92%, rgba(255, 199, 0, 0.14), transparent 50%);
+    linear-gradient(180deg, rgba(20, 17, 11, 0.1) 0%, rgba(20, 17, 11, 0.02) 30%, rgba(20, 17, 11, 0.2) 100%),
+    linear-gradient(90deg, transparent 0%, rgba(20, 17, 11, 0.72) 38%, rgba(20, 17, 11, 0.72) 62%, transparent 100%);
   pointer-events: none;
 }
 
-.hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.035) 0px,
-    rgba(255, 255, 255, 0.035) 1px,
-    transparent 1px,
-    transparent 28px
-  );
-  pointer-events: none;
+.hero__banner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  margin: 0 auto;
 }
 
 .hero__inner {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 30px;
-  padding: 56px 20px;
+  justify-content: center;
+  gap: 24px;
+  padding: 20px;
   flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  .hero {
+    aspect-ratio: auto;
+    min-height: 300px;
+  }
+
+  .hero__inner {
+    position: static;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 32px 20px 40px;
+  }
 }
 
 .hero__eyebrow {
