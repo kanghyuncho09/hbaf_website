@@ -53,7 +53,10 @@ function ensureRecurringMeetings() {
       const alreadyExists = list.some((r) => r.date === dateStr && r.roomId === RECURRING_ROOM_ID && r.start === m.start && r.recurring);
       if (alreadyExists) return;
       const sameDay = list.filter((r) => r.date === dateStr && r.roomId === RECURRING_ROOM_ID);
-      if (overlapsExisting(sameDay, m.start, m.end)) return;
+      if (overlapsExisting(sameDay, m.start, m.end)) {
+        console.log(`[고정회의] ${dateStr} ${m.name}은(는) 겹치는 예약이 있어 건너뜀`);
+        return;
+      }
       db.appendToList("meeting-reservations", {
         date: dateStr,
         roomId: RECURRING_ROOM_ID,
