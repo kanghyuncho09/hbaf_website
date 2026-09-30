@@ -27,6 +27,49 @@ function overlapsExisting(list, start, end, excludeId) {
   return list.some((r) => String(r.id) !== String(excludeId) && s < toMin(r.end) && e > toMin(r.start));
 }
 
+// 매주 고정으로 자동 예약되는 정기 회의 (요일은 Date.getDay() 기준: 1=월, 3=수, 4=목).
+// 본인 소유가 아니라 username을 "system-recurring"으로 심어두므로, 직원들은 수정/취소
+// 버튼이 안 보이고 관리자만 필요하면 손댈 수 있다(예약 소유권 검사 로직 그대로 재사용).
+const RECURRING_MEETINGS = [
+  { weekday: 1, start: "14:00", end: "15:30", name: "제품컨셉회의" },
+  { weekday: 3, start: "10:00", end: "11:30", name: "개발회의" },
+  { weekday: 4, start: "14:00", end: "15:30", name: "간부회의" },
+];
+const RECURRING_ROOM_ID = "room-1";
+const RECURRING_ROOM_NAME = "원형회의실";
+const RECURRING_WEEKS_AHEAD = 12;
+
+// 앞으로 12주치 정기 회의를 미리 채워둔다. 이미 그 시간에 다른 예약이 있으면(과거에
+// 누가 먼저 잡아둔 경우) 건너뛰고, 이미 생성된 주는 중복 생성하지 않는다.
+function ensureRecurringMeetings() {
+  const today = new Date();
+  for (let i = 0; i < RECURRING_WEEKS_AHEAD * 7; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (HOLIDAYS.has(dateStr)) continue;
+    RECURRING_MEETINGS.forEach((m) => {
+      if (m.weekday !== d.getDay()) return;
+      const list = db.readList("meeting-reservations");
+      const alreadyExists = list.some((r) => r.date === dateStr && r.roomId === RECURRING_ROOM_ID && r.start === m.start && r.recurring);
+      if (alreadyExists) return;
+      const sameDay = list.filter((r) => r.date === dateStr && r.roomId === RECURRING_ROOM_ID);
+      if (overlapsExisting(sameDay, m.start, m.end)) return;
+      db.appendToList("meeting-reservations", {
+        date: dateStr,
+        roomId: RECURRING_ROOM_ID,
+        roomName: RECURRING_ROOM_NAME,
+        start: m.start,
+        end: m.end,
+        name: m.name,
+        dept: "",
+        purpose: "매주 고정 회의",
+        username: "system-recurring",
+        recurring: true,
+      });
+    });
+  }
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -270,7 +313,9 @@ function purgeOldReservations() {
   db.purgeBeforeToday("vehicle-reservations");
 }
 purgeOldReservations();
+ensureRecurringMeetings();
 setInterval(purgeOldReservations, 30 * 60 * 1000);
+setInterval(ensureRecurringMeetings, 60 * 60 * 1000);
 
 // ---------- 회의실 예약 ----------
 app.get("/api/meeting-reservations", (req, res) => {
