@@ -285,7 +285,21 @@
         <p>차량을 선택하고 08:00 ~ 17:00, 10분 단위로 예약하세요. 이용 후에는 운행일지 작성이 필수입니다.</p>
       </div>
 
+      <p class="vehicle-dept-notice">🙏 타 부서에서 예약하실 때는 차량별 관리부서에 문의 후 예약 부탁드립니다.</p>
       <div class="vehicle-grid" id="vehicleGrid"></div>
+
+      <div class="modal-overlay" id="vehNoticeModal" hidden>
+        <div class="modal-box">
+          <h2>🚗 법인차량 이용 안내</h2>
+          <p>
+            100오 7593 / 100오 7594번 차량은 <strong>영업팀</strong>이, 395너 5527번 차량은
+            <strong>개발팀・온라인팀</strong>이 관리합니다.<br />
+            타 부서에서 이용하실 때는 예약 전 해당 부서에 문의 부탁드립니다 🙏
+          </p>
+          <p>차량 이용 후에는 <strong>운행일지 작성이 필수</strong>입니다. 꼭 작성해 주세요!</p>
+          <button type="button" class="btn" id="vehNoticeCloseBtn">확인했습니다</button>
+        </div>
+      </div>
 
       <div class="reservation-layout">
         <section class="card reservation-panel">

@@ -5,6 +5,13 @@
     "car-3": "395너 5527",
   };
 
+  // 차량별 관리 부서 — 타 부서는 예약 전 해당 부서에 문의하도록 안내한다.
+  const MANAGING_DEPT = {
+    "car-2": "영업팀",
+    "car-1": "영업팀",
+    "car-3": "개발팀・온라인팀",
+  };
+
   const VEHICLE_PHOTO = "/assets/img/car.png";
   const START_MIN = 8 * 60; // 08:00
   const END_MIN = 17 * 60; // 17:00
@@ -47,6 +54,7 @@
           <div class="vehicle-card__body">
             <h3>${name}</h3>
             <div class="plate">법인 업무용 차량</div>
+            <div class="vehicle-card__dept">📋 관리부서: ${MANAGING_DEPT[id] || "-"}</div>
             <button class="btn btn--sm ${id === state.vehicle ? "" : "btn--outline"}" data-select="${id}">
               ${id === state.vehicle ? "선택됨" : "이 차량 선택"}
             </button>
@@ -554,11 +562,42 @@
     });
   }
 
+  // 차량 예약 화면에 처음 들어올 때(세션당 한 번) 운행일지 작성 필수 안내 팝업을 띄운다.
+  const NOTICE_SHOWN_KEY = "hbaf-vehicle-notice-shown";
+
+  function isVehicleViewActive() {
+    const v = document.getElementById("view-vehicle");
+    return !!v && v.classList.contains("active");
+  }
+
+  function maybeShowNotice() {
+    const modal = document.getElementById("vehNoticeModal");
+    if (!modal) return;
+    try {
+      if (sessionStorage.getItem(NOTICE_SHOWN_KEY)) return;
+      sessionStorage.setItem(NOTICE_SHOWN_KEY, "1");
+    } catch (e) {}
+    modal.hidden = false;
+  }
+
+  function initNoticeModal() {
+    const modal = document.getElementById("vehNoticeModal");
+    if (!modal) return;
+    document.getElementById("vehNoticeCloseBtn").addEventListener("click", () => {
+      modal.hidden = true;
+    });
+    document.addEventListener("view:changed", (e) => {
+      if (e.detail.view === "vehicle") maybeShowNotice();
+    });
+    if (isVehicleViewActive()) maybeShowNotice();
+  }
+
   document.addEventListener("layout:ready", () => {
     if (!document.getElementById("vehicleGrid")) return;
     initSlider();
     renderVehicleGrid();
     initControls();
+    initNoticeModal();
     loadReservations();
     loadLogs();
 

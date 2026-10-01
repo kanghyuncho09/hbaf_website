@@ -431,7 +431,73 @@
 .vehicle-card .plate {
   color: var(--gray-500);
   font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.vehicle-card__dept {
+  display: inline-block;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
   margin-bottom: 14px;
+}
+
+.vehicle-dept-notice {
+  background: #fff8e1;
+  border: 1px solid #f0d37a;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin: 0 0 16px;
+}
+
+/* ---------- 간단한 안내 팝업 모달 (법인차량 이용 안내 등) ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(33, 33, 33, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal-box {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.modal-box h2 {
+  margin: 0 0 14px;
+  font-size: 19px;
+}
+
+.modal-box p {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--gray-700);
+  text-align: left;
+  line-height: 1.6;
+}
+
+.modal-box .btn {
+  margin-top: 6px;
+  width: 100%;
 }
 
 .log-form {
