@@ -450,7 +450,7 @@
     <div class="container">
       <div class="page-header">
         <h1>공지 게시판</h1>
-        <p>청소분담표 공지, 자유게시판, 점심 메뉴 룰렛, 오늘의 신청곡, 신규 입사자 웰컴 키트를 만나보세요.</p>
+        <p>청소분담표 공지, 자유게시판, 점심 메뉴 룰렛, 오늘의 신청곡을 만나보세요.</p>
       </div>
 
       <div class="tabs" id="tabs">
@@ -458,7 +458,6 @@
         <button class="tab-btn" data-tab="free-board">💬 자유게시판</button>
         <button class="tab-btn" data-tab="lunch-roulette">🎯 점심 룰렛</button>
         <button class="tab-btn" data-tab="song-request">🎵 오늘의 신청곡</button>
-        <button class="tab-btn" data-tab="welcome-kit">🎁 신규 입사자 웰컴 키트</button>
       </div>
 
       <!-- 청소분담표 -->
@@ -615,38 +614,6 @@
           <div class="card">
             <h2>오늘의 신청곡 리스트</h2>
             <ul id="songList" class="post-list"></ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- 신규 입사자 웰컴 키트 -->
-      <section class="tab-panel" id="welcome-kit">
-        <div class="board-layout">
-          <div class="card">
-            <h2>🎁 웰컴 키트 신청</h2>
-            <p class="panel-sub">
-              신규 입사자분은 웰컴 키트를 받으실 정보를 남겨주세요.<br />
-              입력하신 이름・연락처・주소는 관리자만 확인할 수 있습니다.
-            </p>
-            <form id="welcomeKitForm">
-              <div class="form-row">
-                <label for="welcomeKitName">이름</label>
-                <input type="text" id="welcomeKitName" required placeholder="홍길동" />
-              </div>
-              <div class="form-row">
-                <label for="welcomeKitPhone">연락처</label>
-                <input type="text" id="welcomeKitPhone" required placeholder="010-1234-5678" />
-              </div>
-              <div class="form-row">
-                <label for="welcomeKitAddress">주소</label>
-                <input type="text" id="welcomeKitAddress" required placeholder="웰컴 키트를 받으실 주소" />
-              </div>
-              <button type="submit" class="btn btn--sm">제출하기</button>
-            </form>
-          </div>
-          <div class="card" id="welcomeKitAdminCard" hidden>
-            <h2>🔒 신청 목록 (관리자 전용)</h2>
-            <ul id="welcomeKitList" class="post-list"></ul>
           </div>
         </div>
       </section>
@@ -823,7 +790,6 @@
 <script src="/js/meeting-room.js"></script>
 <script src="/js/vehicle.js"></script>
 <script src="/js/board.js"></script>
-<script src="/js/welcome-kit.js"></script>
 <script src="/js/game.js"></script>
 <script src="/js/vet.js"></script>
 <script src="/js/suggestions.js"></script>

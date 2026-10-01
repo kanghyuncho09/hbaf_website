@@ -106,7 +106,6 @@ db.ensureFile("meeting-reservations", []);
 db.ensureFile("vehicle-reservations", []);
 db.ensureFile("driving-logs", []);
 db.ensureFile("vehicle-log-violations", []);
-db.ensureFile("welcome-kit-requests", []);
 db.ensureFile("song-requests", []);
 db.ensureFile("lunch-menu", [
   { id: 1, createdAt: new Date().toISOString(), name: "김치찌개" },
@@ -782,33 +781,6 @@ app.post("/api/updates", requireAdmin, (req, res) => {
 
 app.delete("/api/updates/:id", requireAdmin, (req, res) => {
   const ok = db.removeFromList("updates", req.params.id);
-  res.status(ok ? 200 : 404).json({ ok });
-});
-
-// ---------- 신규 입사자 웰컴 키트 (이름/연락처/주소 — 개인정보라 목록은 관리자만 조회) ----------
-app.post("/api/welcome-kit-requests", (req, res) => {
-  const { name, phone, address } = req.body;
-  const cleanName = String(name || "").trim().slice(0, 30);
-  const cleanPhone = String(phone || "").trim().slice(0, 30);
-  const cleanAddress = String(address || "").trim().slice(0, 200);
-  if (!cleanName || !cleanPhone || !cleanAddress) {
-    return res.status(400).json({ error: "이름, 연락처, 주소를 모두 입력해주세요." });
-  }
-  db.appendToList("welcome-kit-requests", {
-    name: cleanName,
-    phone: cleanPhone,
-    address: cleanAddress,
-    username: req.user.username,
-  });
-  res.status(201).json({ ok: true });
-});
-
-app.get("/api/welcome-kit-requests", requireAdmin, (req, res) => {
-  res.json(db.readList("welcome-kit-requests").sort((a, b) => b.id - a.id));
-});
-
-app.delete("/api/welcome-kit-requests/:id", requireAdmin, (req, res) => {
-  const ok = db.removeFromList("welcome-kit-requests", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
 });
 
