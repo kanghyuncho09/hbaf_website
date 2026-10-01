@@ -456,6 +456,22 @@
   margin: 0 0 16px;
 }
 
+.vehicle-unlogged-banner {
+  background: #fdecea;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger);
+  margin: 0 0 16px;
+  line-height: 1.6;
+}
+
+.vehicle-unlogged-banner[hidden] {
+  display: none;
+}
+
 /* ---------- 간단한 안내 팝업 모달 (법인차량 이용 안내 등) ---------- */
 .modal-overlay {
   position: fixed;

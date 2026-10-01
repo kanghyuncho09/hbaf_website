@@ -27,6 +27,21 @@ function overlapsExisting(list, start, end, excludeId) {
   return list.some((r) => String(r.id) !== String(excludeId) && s < toMin(r.end) && e > toMin(r.start));
 }
 
+// 서버(Render)는 UTC 시간대이므로, 날짜가 필요한 모든 곳에서 이 함수로 한국 시간 기준
+// 날짜 문자열을 직접 계산한다 (new Date().toISOString()을 그대로 쓰면 날짜가 하루씩
+// 밀릴 수 있다).
+function kstDateStr(date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .formatToParts(date)
+    .reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 // 매주 고정으로 자동 예약되는 정기 회의 (요일은 Date.getDay() 기준: 1=월, 3=수, 4=목).
 // 본인 소유가 아니라 username을 "system-recurring"으로 심어두므로, 직원들은 수정/취소
 // 버튼이 안 보이고 관리자만 필요하면 손댈 수 있다(예약 소유권 검사 로직 그대로 재사용).
@@ -90,6 +105,7 @@ app.use((req, res, next) => {
 db.ensureFile("meeting-reservations", []);
 db.ensureFile("vehicle-reservations", []);
 db.ensureFile("driving-logs", []);
+db.ensureFile("vehicle-log-violations", []);
 db.ensureFile("song-requests", []);
 db.ensureFile("lunch-menu", [
   { id: 1, createdAt: new Date().toISOString(), name: "김치찌개" },
@@ -311,9 +327,51 @@ app.delete("/api/admin/users/:id", requireAdmin, (req, res) => {
 
 // ---------- 회의실/차량 예약 자동 정리 ----------
 // 지난 날짜의 예약 "현황"은 매일 자동으로 비운다 (운행일지 등 기록성 데이터는 대상이 아님).
+const VEHICLE_LOG_VIOLATION_LIMIT = 3;
+
+// 차량 예약은 날짜가 지나면 "현황"에서 자동으로 사라지므로, 사라지기 직전에 운행일지를
+// 안 쓴 채로 끝난 건이 있으면 그 사람 이름으로 "미기록"을 하나 남겨둔다. 이 기록은
+// 예약과 달리 지워지지 않아서, 나중에 몇 번 누적됐는지 계속 추적할 수 있다.
+function purgeVehicleReservationsAndTrackViolations() {
+  const today = kstDateStr(new Date());
+  const reservations = db.readList("vehicle-reservations");
+  const toKeep = reservations.filter((r) => !r.date || r.date >= today);
+  const expiring = reservations.filter((r) => r.date && r.date < today);
+
+  if (expiring.length) {
+    const logs = db.readList("driving-logs");
+    const alreadyTracked = new Set(db.readList("vehicle-log-violations").map((v) => String(v.reservationId)));
+    expiring.forEach((r) => {
+      if (!r.username || alreadyTracked.has(String(r.id))) return;
+      const hasLog = logs.some(
+        (l) =>
+          l.username === r.username &&
+          l.vehicleId === r.vehicleId &&
+          l.createdAt &&
+          kstDateStr(new Date(l.createdAt)) === r.date
+      );
+      if (hasLog) return;
+      db.appendToList("vehicle-log-violations", {
+        reservationId: r.id,
+        username: r.username,
+        name: r.name,
+        vehicleId: r.vehicleId,
+        vehicleName: r.vehicleName,
+        date: r.date,
+      });
+    });
+  }
+
+  db.writeJSON("vehicle-reservations", toKeep);
+}
+
+function getVehicleLogViolationCount(username) {
+  return db.readList("vehicle-log-violations").filter((v) => v.username === username).length;
+}
+
 function purgeOldReservations() {
   db.purgeBeforeToday("meeting-reservations");
-  db.purgeBeforeToday("vehicle-reservations");
+  purgeVehicleReservationsAndTrackViolations();
 }
 purgeOldReservations();
 ensureRecurringMeetings();
@@ -415,6 +473,12 @@ app.post("/api/vehicle-reservations", (req, res) => {
   if (HOLIDAYS.has(date)) {
     return res.status(400).json({ error: "공휴일에는 예약할 수 없습니다." });
   }
+  if (req.user.id !== "admin" && getVehicleLogViolationCount(req.user.username) >= VEHICLE_LOG_VIOLATION_LIMIT) {
+    return res.status(403).json({
+      error:
+        "운행일지 미작성이 3회 누적되어 새 예약이 제한되었습니다.\n관리자에게 문의해 주세요.",
+    });
+  }
   const sameDay = db.readList("vehicle-reservations").filter((r) => r.date === date && r.vehicleId === vehicleId);
   if (overlapsExisting(sameDay, start, end)) {
     return res.status(409).json({ error: "이미 예약된 시간대와 겹칩니다." });
@@ -475,6 +539,7 @@ app.post("/api/driving-logs", (req, res) => {
   const record = db.appendToList("driving-logs", {
     reservationId, vehicleId, vehicleName, driver, dept,
     departure, destination, startOdo, endOdo, passengers, notes,
+    username: req.user.username,
   });
   res.status(201).json(record);
 });
@@ -497,6 +562,29 @@ app.put("/api/driving-logs/:id", requireAdmin, (req, res) => {
 app.delete("/api/driving-logs/:id", requireAdmin, (req, res) => {
   const ok = db.removeFromList("driving-logs", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
+});
+
+// ---------- 운행일지 미기록 현황 (관리자 전용) ----------
+// 사람별로 몇 번 누적됐는지 모아서 보여주고, 필요하면 관리자가 초기화해서
+// 다시 예약할 수 있게 풀어줄 수 있다.
+app.get("/api/admin/vehicle-violations", requireAdmin, (req, res) => {
+  const violations = db.readList("vehicle-log-violations");
+  const byUser = new Map();
+  violations.forEach((v) => {
+    const entry = byUser.get(v.username) || { username: v.username, name: v.name, count: 0, items: [] };
+    entry.count += 1;
+    entry.name = v.name || entry.name;
+    entry.items.push({ date: v.date, vehicleName: v.vehicleName });
+    byUser.set(v.username, entry);
+  });
+  res.json([...byUser.values()].sort((a, b) => b.count - a.count));
+});
+
+app.delete("/api/admin/vehicle-violations/:username", requireAdmin, (req, res) => {
+  const violations = db.readList("vehicle-log-violations");
+  const kept = violations.filter((v) => v.username !== req.params.username);
+  db.writeJSON("vehicle-log-violations", kept);
+  res.json({ ok: true, removed: violations.length - kept.length });
 });
 
 app.get("/api/driving-logs/export/csv", requireAdmin, (req, res) => {

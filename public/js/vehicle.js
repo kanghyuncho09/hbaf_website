@@ -138,6 +138,45 @@
     });
   }
 
+  // 오늘 내가 이용을 끝낸 차량인데 아직 운행일지를 안 쓴 게 있으면 경고 배너를 띄운다.
+  // (예약 "현황"은 자정 지나면 자동으로 지워지므로, 과거 날짜까지는 추적하지 않고
+  // 오늘 안에 깜빡한 건만 바로바로 잡아주는 용도다.)
+  function checkUnloggedToday() {
+    const banner = document.getElementById("vehUnloggedBanner");
+    if (!banner) return;
+    const myUsername = typeof getUsername === "function" ? getUsername() : "";
+    if (!myUsername) {
+      banner.hidden = true;
+      return;
+    }
+    const today = localDateStr();
+    const nowMin = (() => {
+      const now = new Date();
+      return now.getHours() * 60 + now.getMinutes();
+    })();
+
+    const endedToday = state.allReservations.filter(
+      (r) => r.username === myUsername && r.date === today && toMinutes(r.end) <= nowMin
+    );
+    const loggedVehicleIds = new Set(
+      allLogs
+        .filter((l) => l.username === myUsername && localDateStr(new Date(l.createdAt)) === today)
+        .map((l) => l.vehicleId)
+    );
+    const unlogged = endedToday.filter((r) => !loggedVehicleIds.has(r.vehicleId));
+
+    if (!unlogged.length) {
+      banner.hidden = true;
+      return;
+    }
+    const items = unlogged.map((r) => `${VEHICLES[r.vehicleId] || r.vehicleId} (${r.start}~${r.end})`).join(", ");
+    banner.innerHTML = `
+      ⚠️ 오늘 이용하신 <strong>${items}</strong> 운행일지를 아직 작성하지 않으셨어요!<br />
+      잊지 말고 꼭 작성해 주세요. 미기록이 3회 쌓이면 다음 예약부터 제한됩니다.
+    `;
+    banner.hidden = false;
+  }
+
   async function loadReservations() {
     const res = await fetch("/api/vehicle-reservations");
     const all = await res.json();
@@ -146,6 +185,7 @@
     renderVehicleGrid();
     slider.init(bookedRangesForSlider(), pastUntilForSelectedDate());
     renderReservationList(state.reservations);
+    checkUnloggedToday();
   }
 
   async function refreshReservations() {
@@ -156,6 +196,7 @@
     renderVehicleGrid();
     slider.refresh(bookedRangesForSlider(), pastUntilForSelectedDate());
     renderReservationList(state.reservations);
+    checkUnloggedToday();
   }
 
   function renderReservationList(list) {
@@ -273,6 +314,7 @@
     const res = await fetch("/api/driving-logs");
     allLogs = await res.json();
     renderLogs();
+    checkUnloggedToday();
   }
 
   function renderLogs() {

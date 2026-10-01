@@ -83,11 +83,73 @@
     return div.innerHTML;
   }
 
+  /* ---------- 운행일지 미기록 현황 ---------- */
+  function violationHtml(v) {
+    const itemsText = v.items
+      .slice(-5)
+      .map((it) => `${it.date} ${escapeHtml(it.vehicleName || "")}`)
+      .join(", ");
+    return `
+      <li>
+        <div class="post-title">
+          ${escapeHtml(v.name || v.username)} <span class="post-meta">(${escapeHtml(v.username)})</span>
+          — <strong>${v.count}회</strong>${v.count >= 3 ? " 🚫 예약 제한됨" : ""}
+        </div>
+        <div class="post-meta">${itemsText}</div>
+        <div class="post-admin-actions">
+          <button type="button" class="btn btn--sm btn--outline" data-reset-violation="${v.username}">초기화</button>
+        </div>
+      </li>`;
+  }
+
+  async function loadViolations() {
+    const list = document.getElementById("adminVehicleViolationList");
+    if (!list) return;
+    if (!isAdmin()) {
+      list.innerHTML = `<p class="empty-state">관리자로 로그인해야 볼 수 있습니다.</p>`;
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/vehicle-violations", { headers: adminHeaders() });
+      if (!res.ok) throw new Error("failed");
+      const violations = await res.json();
+      if (!violations.length) {
+        list.innerHTML = `<p class="empty-state">운행일지 미기록 건이 없습니다.</p>`;
+        return;
+      }
+      list.innerHTML = violations.map(violationHtml).join("");
+      list.querySelectorAll("[data-reset-violation]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const username = btn.dataset.resetViolation;
+          if (!confirm(`${username}님의 미기록 횟수를 초기화하시겠습니까?`)) return;
+          const res = await fetch(`/api/admin/vehicle-violations/${encodeURIComponent(username)}`, {
+            method: "DELETE",
+            headers: adminHeaders(),
+          });
+          if (!res.ok) {
+            alert("처리에 실패했습니다.");
+            return;
+          }
+          loadViolations();
+        });
+      });
+    } catch (e) {
+      list.innerHTML = `<p class="empty-state">목록을 불러오지 못했습니다.</p>`;
+    }
+  }
+
   document.addEventListener("layout:ready", () => {
     if (document.getElementById("adminUserList")) loadUsers();
+    if (document.getElementById("adminVehicleViolationList")) loadViolations();
   });
   document.addEventListener("view:changed", (e) => {
-    if (e.detail && e.detail.view === "admin-users") loadUsers();
+    if (e.detail && e.detail.view === "admin-users") {
+      loadUsers();
+      loadViolations();
+    }
   });
-  document.addEventListener("admin:changed", loadUsers);
+  document.addEventListener("admin:changed", () => {
+    loadUsers();
+    loadViolations();
+  });
 })();
