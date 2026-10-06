@@ -765,8 +765,10 @@
         <h2>🚗 운행일지 미기록 현황</h2>
         <p>
           차량 이용 후 운행일지를 쓰지 않은 채 예약이 지나가면 한 건씩 쌓입니다.<br />
-          3회 누적되면 다음 예약부터 막히니, 필요하면 초기화해 주세요.
+          3회 누적되면 다음 예약부터 막히니, 필요하면 초기화해 주세요.<br />
+          이 화면을 열 때마다 오늘 기준으로 다시 계산하며, 늦게라도 쓴 운행일지는 미기록에서 빠집니다.
         </p>
+        <button type="button" class="btn btn--sm btn--outline" id="adminViolationRefreshBtn">🔄 오늘 기준으로 새로고침</button>
       </div>
       <div class="card">
         <ul id="adminVehicleViolationList" class="post-list"></ul>

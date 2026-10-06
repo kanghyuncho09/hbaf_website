@@ -89,16 +89,24 @@
       .slice(-5)
       .map((it) => `${it.date} ${escapeHtml(it.vehicleName || "")}`)
       .join(", ");
+    const pendingText = (v.pending || [])
+      .map((p) => `${escapeHtml(p.vehicleName || "")} (${p.start}~${p.end})`)
+      .join(", ");
     return `
       <li>
         <div class="post-title">
           ${escapeHtml(v.name || v.username)} <span class="post-meta">(${escapeHtml(v.username)})</span>
           — <strong>${v.count}회</strong>${v.count >= 3 ? " 🚫 예약 제한됨" : ""}
         </div>
-        <div class="post-meta">${itemsText}</div>
-        <div class="post-admin-actions">
+        ${itemsText ? `<div class="post-meta">${itemsText}</div>` : ""}
+        ${pendingText ? `<div class="post-meta">⏳ 오늘 이용 후 아직 미작성: ${pendingText} (자정까지 안 쓰면 미기록 확정)</div>` : ""}
+        ${
+          v.count > 0
+            ? `<div class="post-admin-actions">
           <button type="button" class="btn btn--sm btn--outline" data-reset-violation="${v.username}">초기화</button>
-        </div>
+        </div>`
+            : ""
+        }
       </li>`;
   }
 
@@ -141,6 +149,8 @@
   document.addEventListener("layout:ready", () => {
     if (document.getElementById("adminUserList")) loadUsers();
     if (document.getElementById("adminVehicleViolationList")) loadViolations();
+    const refreshBtn = document.getElementById("adminViolationRefreshBtn");
+    if (refreshBtn) refreshBtn.addEventListener("click", loadViolations);
   });
   document.addEventListener("view:changed", (e) => {
     if (e.detail && e.detail.view === "admin-users") {

@@ -369,6 +369,70 @@ function getVehicleLogViolationCount(username) {
   return db.readList("vehicle-log-violations").filter((v) => v.username === username).length;
 }
 
+function kstNowMinutes() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .formatToParts(new Date())
+    .reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {});
+  return Number(parts.hour) * 60 + Number(parts.minute);
+}
+
+// 이용일 당일에 못 쓰고 며칠 늦게라도 운행일지를 쓴 사람은 미기록에서 빼준다.
+// 로그 한 건은 미기록 한 건만 풀어주고(같은 사람·같은 차량), 이용일 이후 3일 안에 쓴 것만 인정한다.
+const VEHICLE_LOG_LATE_GRACE_DAYS = 3;
+
+function reconcileVehicleViolations() {
+  const violations = db.readList("vehicle-log-violations");
+  if (!violations.length) return;
+  const logs = db
+    .readList("driving-logs")
+    .filter((l) => l.username && l.createdAt)
+    .map((l) => ({ username: l.username, vehicleId: l.vehicleId, date: kstDateStr(new Date(l.createdAt)), used: false }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const forgiven = new Set();
+  [...violations]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .forEach((v) => {
+      const lateDays = (d) => Math.round((Date.parse(d) - Date.parse(v.date)) / 86400000);
+      const log = logs.find(
+        (l) =>
+          !l.used &&
+          l.username === v.username &&
+          l.vehicleId === v.vehicleId &&
+          lateDays(l.date) >= 0 &&
+          lateDays(l.date) <= VEHICLE_LOG_LATE_GRACE_DAYS
+      );
+      if (!log) return;
+      log.used = true;
+      forgiven.add(v.id);
+    });
+  if (forgiven.size) {
+    db.writeJSON("vehicle-log-violations", violations.filter((v) => !forgiven.has(v.id)));
+  }
+}
+
+// 오늘 이용이 끝났는데 아직 운행일지가 없는 예약 (자정이 지나야 정식 미기록으로 확정된다)
+function getPendingUnloggedToday() {
+  const today = kstDateStr(new Date());
+  const nowMin = kstNowMinutes();
+  const todayLogs = db
+    .readList("driving-logs")
+    .filter((l) => l.username && l.createdAt && kstDateStr(new Date(l.createdAt)) === today);
+  return db
+    .readList("vehicle-reservations")
+    .filter(
+      (r) =>
+        r.date === today &&
+        r.username &&
+        toMin(r.end) <= nowMin &&
+        !todayLogs.some((l) => l.username === r.username && l.vehicleId === r.vehicleId)
+    );
+}
+
 function purgeOldReservations() {
   db.purgeBeforeToday("meeting-reservations");
   purgeVehicleReservationsAndTrackViolations();
@@ -474,10 +538,14 @@ app.post("/api/vehicle-reservations", (req, res) => {
     return res.status(400).json({ error: "공휴일에는 예약할 수 없습니다." });
   }
   if (req.user.id !== "admin" && getVehicleLogViolationCount(req.user.username) >= VEHICLE_LOG_VIOLATION_LIMIT) {
-    return res.status(403).json({
-      error:
-        "운행일지 미작성이 3회 누적되어 새 예약이 제한되었습니다.\n관리자에게 문의해 주세요.",
-    });
+    // 늦게라도 운행일지를 쓴 게 있으면 먼저 반영해보고, 그래도 3회 이상이면 막는다.
+    reconcileVehicleViolations();
+    if (getVehicleLogViolationCount(req.user.username) >= VEHICLE_LOG_VIOLATION_LIMIT) {
+      return res.status(403).json({
+        error:
+          "운행일지 미작성이 3회 누적되어 새 예약이 제한되었습니다.\n관리자에게 문의해 주세요.",
+      });
+    }
   }
   const sameDay = db.readList("vehicle-reservations").filter((r) => r.date === date && r.vehicleId === vehicleId);
   if (overlapsExisting(sameDay, start, end)) {
@@ -567,17 +635,31 @@ app.delete("/api/driving-logs/:id", requireAdmin, (req, res) => {
 // ---------- 운행일지 미기록 현황 (관리자 전용) ----------
 // 사람별로 몇 번 누적됐는지 모아서 보여주고, 필요하면 관리자가 초기화해서
 // 다시 예약할 수 있게 풀어줄 수 있다.
+// 열 때마다 "지금 시점" 기준으로 다시 계산한다: 지난 날짜 예약을 바로 정리해 미기록으로 확정하고,
+// 늦게라도 쓴 운행일지는 미기록에서 빼고, 오늘 이미 끝났는데 아직 안 쓴 건은 "오늘 미작성"으로 따로 보여준다.
 app.get("/api/admin/vehicle-violations", requireAdmin, (req, res) => {
-  const violations = db.readList("vehicle-log-violations");
+  purgeVehicleReservationsAndTrackViolations();
+  reconcileVehicleViolations();
+
   const byUser = new Map();
-  violations.forEach((v) => {
-    const entry = byUser.get(v.username) || { username: v.username, name: v.name, count: 0, items: [] };
+  const entryFor = (username, name) => {
+    const entry = byUser.get(username) || { username, name, count: 0, items: [], pending: [] };
+    entry.name = name || entry.name;
+    byUser.set(username, entry);
+    return entry;
+  };
+  db.readList("vehicle-log-violations").forEach((v) => {
+    const entry = entryFor(v.username, v.name);
     entry.count += 1;
-    entry.name = v.name || entry.name;
     entry.items.push({ date: v.date, vehicleName: v.vehicleName });
-    byUser.set(v.username, entry);
   });
-  res.json([...byUser.values()].sort((a, b) => b.count - a.count));
+  getPendingUnloggedToday().forEach((r) => {
+    const entry = entryFor(r.username, r.name);
+    entry.pending.push({ vehicleName: r.vehicleName || r.vehicleId, start: r.start, end: r.end });
+  });
+  res.json(
+    [...byUser.values()].sort((a, b) => b.count - a.count || b.pending.length - a.pending.length)
+  );
 });
 
 app.delete("/api/admin/vehicle-violations/:username", requireAdmin, (req, res) => {
