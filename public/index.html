@@ -773,6 +773,23 @@
       <div class="card">
         <ul id="adminVehicleViolationList" class="post-list"></ul>
       </div>
+
+      <div class="page-header">
+        <h2>🗂️ 지난 예약 기록</h2>
+        <p>
+          지난 날짜의 회의실・법인차량 예약은 현황 화면에서는 사라지지만, 이곳에 계속 보관됩니다.<br />
+          최근 200건까지 보여 주고, 전체는 엑셀(CSV)로 내려받을 수 있습니다.
+        </p>
+        <div class="post-admin-actions">
+          <button type="button" class="btn btn--sm" id="adminHistoryMeetingBtn">회의실</button>
+          <button type="button" class="btn btn--sm btn--outline" id="adminHistoryVehicleBtn">법인차량</button>
+          <button type="button" class="btn btn--sm btn--outline" id="adminHistoryCsvBtn">📥 엑셀(CSV) 다운로드</button>
+        </div>
+      </div>
+      <div class="card">
+        <p class="panel-sub" id="adminHistoryTotal"></p>
+        <ul id="adminHistoryList" class="post-list"></ul>
+      </div>
     </div>
   </section>
 </main>

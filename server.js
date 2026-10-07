@@ -106,6 +106,8 @@ db.ensureFile("meeting-reservations", []);
 db.ensureFile("vehicle-reservations", []);
 db.ensureFile("driving-logs", []);
 db.ensureFile("vehicle-log-violations", []);
+db.ensureFile("meeting-reservations-history", []);
+db.ensureFile("vehicle-reservations-history", []);
 db.ensureFile("song-requests", []);
 db.ensureFile("lunch-menu", [
   { id: 1, createdAt: new Date().toISOString(), name: "김치찌개" },
@@ -360,6 +362,28 @@ function claimMatchingLog(logIndex, { username, vehicleId, date }, graceDays) {
   return true;
 }
 
+// 지난 예약은 "현황"에서는 사라지지만 지우지 않고 *-history.json에 계속 보관한다(관리자 화면에서 조회/내보내기).
+// 예약 id는 현황 목록이 비면 1부터 다시 시작하므로, 같은 예약인지는 id + 생성시각으로 구분한다.
+function archiveReservations(historyName, items) {
+  if (!items.length) return;
+  const history = db.readList(historyName);
+  const key = (r) => `${r.id}|${r.createdAt || ""}`;
+  const seen = new Set(history.map(key));
+  const fresh = items.filter((r) => !seen.has(key(r))).map((r) => ({ ...r, archivedAt: new Date().toISOString() }));
+  if (fresh.length) db.writeJSON(historyName, history.concat(fresh));
+}
+
+function purgeMeetingReservationsAndArchive() {
+  const today = kstDateStr(new Date());
+  const all = db.readList("meeting-reservations");
+  const keep = all.filter((r) => !r.date || r.date >= today);
+  if (keep.length !== all.length) {
+    archiveReservations("meeting-reservations-history", all.filter((r) => r.date && r.date < today));
+    db.writeJSON("meeting-reservations", keep);
+  }
+  return keep;
+}
+
 function purgeVehicleReservationsAndTrackViolations() {
   const today = kstDateStr(new Date());
   const reservations = db.readList("vehicle-reservations");
@@ -368,12 +392,16 @@ function purgeVehicleReservationsAndTrackViolations() {
 
   if (expiring.length) {
     const logIndex = buildLogIndex();
-    const alreadyTracked = new Set(db.readList("vehicle-log-violations").map((v) => String(v.reservationId)));
+    const violationKey = (reservationId, createdAt) => `${reservationId}|${createdAt || ""}`;
+    const alreadyTracked = new Set(
+      db.readList("vehicle-log-violations").map((v) => violationKey(v.reservationId, v.reservationCreatedAt))
+    );
     expiring.forEach((r) => {
-      if (!r.username || alreadyTracked.has(String(r.id))) return;
+      if (!r.username || alreadyTracked.has(violationKey(r.id, r.createdAt))) return;
       if (claimMatchingLog(logIndex, r, 0)) return;
       db.appendToList("vehicle-log-violations", {
         reservationId: r.id,
+        reservationCreatedAt: r.createdAt,
         username: r.username,
         name: r.name,
         vehicleId: r.vehicleId,
@@ -381,9 +409,10 @@ function purgeVehicleReservationsAndTrackViolations() {
         date: r.date,
       });
     });
+    archiveReservations("vehicle-reservations-history", expiring);
+    db.writeJSON("vehicle-reservations", toKeep);
   }
-
-  db.writeJSON("vehicle-reservations", toKeep);
+  return toKeep;
 }
 
 function getVehicleLogViolationCount(username) {
@@ -434,7 +463,7 @@ function getPendingUnloggedToday() {
 }
 
 function purgeOldReservations() {
-  db.purgeBeforeToday("meeting-reservations");
+  purgeMeetingReservationsAndArchive();
   purgeVehicleReservationsAndTrackViolations();
 }
 purgeOldReservations();
@@ -444,7 +473,7 @@ setInterval(ensureRecurringMeetings, 60 * 60 * 1000);
 
 // ---------- 회의실 예약 ----------
 app.get("/api/meeting-reservations", (req, res) => {
-  res.json(db.purgeBeforeToday("meeting-reservations"));
+  res.json(purgeMeetingReservationsAndArchive());
 });
 
 app.post("/api/meeting-reservations", (req, res) => {
@@ -526,7 +555,7 @@ app.get("/api/public/room-today", (req, res) => {
 
 // ---------- 법인차량 예약 ----------
 app.get("/api/vehicle-reservations", (req, res) => {
-  res.json(db.purgeBeforeToday("vehicle-reservations"));
+  res.json(purgeVehicleReservationsAndTrackViolations());
 });
 
 app.post("/api/vehicle-reservations", (req, res) => {
@@ -660,6 +689,41 @@ app.get("/api/admin/vehicle-violations", requireAdmin, (req, res) => {
   res.json(
     [...byUser.values()].sort((a, b) => b.count - a.count || b.pending.length - a.pending.length)
   );
+});
+
+// ---------- 지난 예약 기록 (회의실 / 법인차량, 관리자 전용) ----------
+function loadReservationHistory(type) {
+  const name = type === "vehicle" ? "vehicle-reservations-history" : "meeting-reservations-history";
+  return db
+    .readList(name)
+    .sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.start || "").localeCompare(a.start || ""));
+}
+
+app.get("/api/admin/reservation-history", requireAdmin, (req, res) => {
+  const type = req.query.type === "vehicle" ? "vehicle" : "meeting";
+  const all = loadReservationHistory(type);
+  res.json({ total: all.length, items: all.slice(0, 200) });
+});
+
+app.get("/api/admin/reservation-history/csv", requireAdmin, (req, res) => {
+  const type = req.query.type === "vehicle" ? "vehicle" : "meeting";
+  const escapeCsv = (value) => {
+    const s = String(value ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const header =
+    type === "vehicle"
+      ? ["날짜", "시작", "종료", "차량", "예약자", "부서", "목적지"]
+      : ["날짜", "시작", "종료", "회의실", "예약자/회의명", "부서", "회의 목적"];
+  const rows = loadReservationHistory(type).map((r) =>
+    type === "vehicle"
+      ? [r.date, r.start, r.end, r.vehicleName || r.vehicleId, r.name, r.dept || "", r.destination || ""]
+      : [r.date, r.start, r.end, r.roomName || r.roomId, r.name, r.dept || "", r.purpose || ""]
+  );
+  const csv = [header, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\r\n");
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="${type}-reservations-history.csv"`);
+  res.send("﻿" + csv);
 });
 
 app.delete("/api/admin/vehicle-violations/:username", requireAdmin, (req, res) => {
