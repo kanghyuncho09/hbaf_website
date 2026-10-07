@@ -332,25 +332,46 @@ const VEHICLE_LOG_VIOLATION_LIMIT = 3;
 // 차량 예약은 날짜가 지나면 "현황"에서 자동으로 사라지므로, 사라지기 직전에 운행일지를
 // 안 쓴 채로 끝난 건이 있으면 그 사람 이름으로 "미기록"을 하나 남겨둔다. 이 기록은
 // 예약과 달리 지워지지 않아서, 나중에 몇 번 누적됐는지 계속 추적할 수 있다.
+// 운행일지 한 건을 예약 한 건과 짝지어 "썼다"고 인정하는 규칙. 이용일(한국 시간) 기준으로 찾고,
+// 실제로 일지를 쓴 사람이 억울하게 미기록으로 잡히지 않도록 아래 순서로 너그럽게 본다.
+//  1) 같은 사람이 같은 차량으로 쓴 일지
+//  2) 누가 썼든 같은 날 같은 차량 일지 (예약한 사람과 운전해서 쓴 사람이 다른 경우,
+//     관리자 모드를 켠 채 써서 작성자 ID가 "admin"으로 남은 경우, 예전 일지라 작성자 정보가 없는 경우)
+//  3) 같은 사람이 같은 날 차량을 잘못 골라서 쓴 일지 (일지 폼 차량 기본값이 첫 번째 차량이라 흔함)
+// 일지 한 건은 예약 한 건에만 쓰이고, graceDays > 0이면 이용일 이후 그 일수 안에 늦게 쓴 것도 인정한다(1·3번 규칙).
+function buildLogIndex() {
+  return db
+    .readList("driving-logs")
+    .filter((l) => l.createdAt)
+    .map((l) => ({ username: l.username, vehicleId: l.vehicleId, date: kstDateStr(new Date(l.createdAt)), used: false }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function claimMatchingLog(logIndex, { username, vehicleId, date }, graceDays) {
+  const lateDays = (d) => Math.round((Date.parse(d) - Date.parse(date)) / 86400000);
+  const inWindow = logIndex.filter((l) => !l.used && lateDays(l.date) >= 0 && lateDays(l.date) <= graceDays);
+  const sameDay = inWindow.filter((l) => l.date === date);
+  const log =
+    inWindow.find((l) => l.username === username && l.vehicleId === vehicleId) ||
+    sameDay.find((l) => l.vehicleId === vehicleId) ||
+    inWindow.find((l) => l.username && l.username === username);
+  if (!log) return false;
+  log.used = true;
+  return true;
+}
+
 function purgeVehicleReservationsAndTrackViolations() {
   const today = kstDateStr(new Date());
   const reservations = db.readList("vehicle-reservations");
   const toKeep = reservations.filter((r) => !r.date || r.date >= today);
-  const expiring = reservations.filter((r) => r.date && r.date < today);
+  const expiring = reservations.filter((r) => r.date && r.date < today).sort((a, b) => a.date.localeCompare(b.date));
 
   if (expiring.length) {
-    const logs = db.readList("driving-logs");
+    const logIndex = buildLogIndex();
     const alreadyTracked = new Set(db.readList("vehicle-log-violations").map((v) => String(v.reservationId)));
     expiring.forEach((r) => {
       if (!r.username || alreadyTracked.has(String(r.id))) return;
-      const hasLog = logs.some(
-        (l) =>
-          l.username === r.username &&
-          l.vehicleId === r.vehicleId &&
-          l.createdAt &&
-          kstDateStr(new Date(l.createdAt)) === r.date
-      );
-      if (hasLog) return;
+      if (claimMatchingLog(logIndex, r, 0)) return;
       db.appendToList("vehicle-log-violations", {
         reservationId: r.id,
         username: r.username,
@@ -388,27 +409,12 @@ const VEHICLE_LOG_LATE_GRACE_DAYS = 3;
 function reconcileVehicleViolations() {
   const violations = db.readList("vehicle-log-violations");
   if (!violations.length) return;
-  const logs = db
-    .readList("driving-logs")
-    .filter((l) => l.username && l.createdAt)
-    .map((l) => ({ username: l.username, vehicleId: l.vehicleId, date: kstDateStr(new Date(l.createdAt)), used: false }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const logIndex = buildLogIndex();
   const forgiven = new Set();
   [...violations]
     .sort((a, b) => a.date.localeCompare(b.date))
     .forEach((v) => {
-      const lateDays = (d) => Math.round((Date.parse(d) - Date.parse(v.date)) / 86400000);
-      const log = logs.find(
-        (l) =>
-          !l.used &&
-          l.username === v.username &&
-          l.vehicleId === v.vehicleId &&
-          lateDays(l.date) >= 0 &&
-          lateDays(l.date) <= VEHICLE_LOG_LATE_GRACE_DAYS
-      );
-      if (!log) return;
-      log.used = true;
-      forgiven.add(v.id);
+      if (claimMatchingLog(logIndex, v, VEHICLE_LOG_LATE_GRACE_DAYS)) forgiven.add(v.id);
     });
   if (forgiven.size) {
     db.writeJSON("vehicle-log-violations", violations.filter((v) => !forgiven.has(v.id)));
@@ -419,18 +425,12 @@ function reconcileVehicleViolations() {
 function getPendingUnloggedToday() {
   const today = kstDateStr(new Date());
   const nowMin = kstNowMinutes();
-  const todayLogs = db
-    .readList("driving-logs")
-    .filter((l) => l.username && l.createdAt && kstDateStr(new Date(l.createdAt)) === today);
+  const logIndex = buildLogIndex().filter((l) => l.date === today);
   return db
     .readList("vehicle-reservations")
-    .filter(
-      (r) =>
-        r.date === today &&
-        r.username &&
-        toMin(r.end) <= nowMin &&
-        !todayLogs.some((l) => l.username === r.username && l.vehicleId === r.vehicleId)
-    );
+    .filter((r) => r.date === today && r.username && toMin(r.end) <= nowMin)
+    .sort((a, b) => a.start.localeCompare(b.start))
+    .filter((r) => !claimMatchingLog(logIndex, r, 0));
 }
 
 function purgeOldReservations() {

@@ -158,12 +158,11 @@
     const endedToday = state.allReservations.filter(
       (r) => r.username === myUsername && r.date === today && toMinutes(r.end) <= nowMin
     );
-    const loggedVehicleIds = new Set(
-      allLogs
-        .filter((l) => l.username === myUsername && localDateStr(new Date(l.createdAt)) === today)
-        .map((l) => l.vehicleId)
+    // 서버의 짝짓기 규칙과 같게: 오늘 같은 차량 일지(누가 썼든) 또는 내가 오늘 쓴 일지가 있으면 쓴 것으로 본다.
+    const todayLogs = allLogs.filter((l) => l.createdAt && localDateStr(new Date(l.createdAt)) === today);
+    const unlogged = endedToday.filter(
+      (r) => !todayLogs.some((l) => l.vehicleId === r.vehicleId || l.username === myUsername)
     );
-    const unlogged = endedToday.filter((r) => !loggedVehicleIds.has(r.vehicleId));
 
     if (!unlogged.length) {
       banner.hidden = true;
