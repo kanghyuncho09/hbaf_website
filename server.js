@@ -48,7 +48,7 @@ function kstDateStr(date) {
 const RECURRING_MEETINGS = [
   { weekday: 1, start: "14:00", end: "15:30", name: "제품컨셉회의" },
   { weekday: 3, start: "10:00", end: "11:30", name: "개발회의" },
-  { weekday: 4, start: "14:00", end: "15:30", name: "간부회의" },
+  { weekday: 4, start: "15:30", end: "17:00", name: "간부회의" },
 ];
 const RECURRING_ROOM_ID = "room-1";
 const RECURRING_ROOM_NAME = "원형회의실";
@@ -56,17 +56,30 @@ const RECURRING_WEEKS_AHEAD = 12;
 
 // 앞으로 12주치 정기 회의를 미리 채워둔다. 이미 그 시간에 다른 예약이 있으면(과거에
 // 누가 먼저 잡아둔 경우) 건너뛰고, 이미 생성된 주는 중복 생성하지 않는다.
+// 위 RECURRING_MEETINGS의 시간을 바꾸면, 이미 만들어진 앞으로의 정기 회의도 새 시간으로 같이 옮긴다
+// (관리자가 그 주만 직접 고친 건 customized 표시가 붙어서 건드리지 않는다).
 function ensureRecurringMeetings() {
-  const today = new Date();
+  const [ty, tm, td] = kstDateStr(new Date()).split("-").map(Number);
   for (let i = 0; i < RECURRING_WEEKS_AHEAD * 7; i++) {
-    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    const d = new Date(ty, tm - 1, td + i);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     if (HOLIDAYS.has(dateStr)) continue;
     RECURRING_MEETINGS.forEach((m) => {
       if (m.weekday !== d.getDay()) return;
       const list = db.readList("meeting-reservations");
-      const alreadyExists = list.some((r) => r.date === dateStr && r.roomId === RECURRING_ROOM_ID && r.start === m.start && r.recurring);
-      if (alreadyExists) return;
+      const existing = list.find(
+        (r) => r.date === dateStr && r.roomId === RECURRING_ROOM_ID && r.recurring && r.name === m.name
+      );
+      if (existing) {
+        if (existing.customized || (existing.start === m.start && existing.end === m.end)) return;
+        const others = list.filter((r) => r.date === dateStr && r.roomId === RECURRING_ROOM_ID);
+        if (overlapsExisting(others, m.start, m.end, existing.id)) {
+          console.log(`[고정회의] ${dateStr} ${m.name} 시간 변경 불가 — 겹치는 예약이 있어 기존 시간 유지`);
+          return;
+        }
+        db.updateInList("meeting-reservations", existing.id, { start: m.start, end: m.end });
+        return;
+      }
       const sameDay = list.filter((r) => r.date === dateStr && r.roomId === RECURRING_ROOM_ID);
       if (overlapsExisting(sameDay, m.start, m.end)) {
         console.log(`[고정회의] ${dateStr} ${m.name}은(는) 겹치는 예약이 있어 건너뜀`);
@@ -513,7 +526,9 @@ app.put("/api/meeting-reservations/:id", (req, res) => {
   if (overlapsExisting(sameDay, start, end, existing.id)) {
     return res.status(409).json({ error: "이미 예약된 시간대와 겹칩니다." });
   }
-  const updated = db.updateInList("meeting-reservations", req.params.id, { date, start, end, name, dept, purpose });
+  const patch = { date, start, end, name, dept, purpose };
+  if (existing.recurring) patch.customized = true;
+  const updated = db.updateInList("meeting-reservations", req.params.id, patch);
   res.json(updated);
 });
 
