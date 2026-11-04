@@ -46,7 +46,9 @@ function kstDateStr(date) {
 // 본인 소유가 아니라 username을 "system-recurring"으로 심어두므로, 직원들은 수정/취소
 // 버튼이 안 보이고 관리자만 필요하면 손댈 수 있다(예약 소유권 검사 로직 그대로 재사용).
 const RECURRING_MEETINGS = [
+  { weekday: 1, start: "09:50", end: "10:50", name: "브랜드기획팀 주간회의" },
   { weekday: 1, start: "14:00", end: "15:30", name: "제품컨셉회의" },
+  { weekday: 3, start: "09:00", end: "10:00", name: "영업팀 주간회의" },
   { weekday: 3, start: "10:00", end: "11:30", name: "개발회의" },
   { weekday: 4, start: "15:30", end: "17:00", name: "간부회의" },
 ];
