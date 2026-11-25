@@ -219,7 +219,11 @@
           <div class="res-view">
             <span class="r-time">${r.start}~${r.end}</span>
             <span class="r-meta">${escapeHtml(r.name)}${r.dept ? " (" + escapeHtml(r.dept) + ")" : ""}
-              ${r.destination ? `<small>목적지: ${escapeHtml(r.destination)}</small>` : ""}
+              ${
+                r.destination
+                  ? `<small>목적지: ${escapeHtml(r.destination)} <button type="button" class="dest-map-btn" data-dest-map="${escapeHtml(r.destination)}">🗺️ 지도</button></small>`
+                  : ""
+              }
             </span>
             ${
               canManage

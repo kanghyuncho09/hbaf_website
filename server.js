@@ -551,6 +551,12 @@ async function syncHolidays() {
 syncHolidays();
 setInterval(syncHolidays, 24 * 60 * 60 * 1000);
 
+// 카카오맵 JavaScript 키. 지도 SDK가 브라우저에서 직접 쓰는 공개용 키라(카카오 개발자 콘솔에
+// 등록한 도메인에서만 작동) 숨길 수는 없지만, 저장소에 남기지 않도록 환경변수로 받는다.
+app.get("/api/config/kakao", (req, res) => {
+  res.json({ jsKey: process.env.KAKAO_JS_KEY || "" });
+});
+
 // 화면(달력, 예약)에서 쓰는 공휴일 목록. 코드에 적힌 기본값 + API에서 받은 값.
 app.get("/api/holidays", (req, res) => {
   res.json(HOLIDAY_NAMES);

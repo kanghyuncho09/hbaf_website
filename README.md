@@ -32,6 +32,13 @@ npm start
 합칩니다. 공공데이터포털(data.go.kr)에서 해당 API 활용신청 후 받은 **일반 인증키(Decoding)**를
 Render 환경변수 `HOLIDAY_API_KEY`에 넣어주세요.
 
+## 법인차량 목적지 지도 (선택)
+
+예약 현황의 "🗺️ 지도" 버튼은 카카오맵 JavaScript SDK를 씁니다. developers.kakao.com에서 앱을 만들고
+[플랫폼 > Web]에 사이트 도메인(https://hbafseoul-office.com, 로컬 테스트면 http://localhost:3000)을
+등록한 뒤, **JavaScript 키**를 Render 환경변수 `KAKAO_JS_KEY`에 넣으세요. 키가 없으면 지도 대신
+카카오맵 검색 링크만 보여줍니다.
+
 ## GitHub에 올리기
 
 ```bash

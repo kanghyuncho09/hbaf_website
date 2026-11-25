@@ -557,3 +557,120 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- 목적지 지도 (카카오맵) ---------- */
+.dest-map-btn {
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.dest-map-btn:hover {
+  border-color: var(--yellow-dark);
+  background: var(--cream);
+}
+
+.dest-map-box {
+  position: relative;
+  max-width: 560px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  text-align: left;
+}
+
+.dest-map-box h2 {
+  padding-right: 36px;
+  text-align: left;
+}
+
+.dest-map-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.dest-map-place {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.dest-map-place span {
+  color: var(--gray-700);
+  font-size: 13px;
+}
+
+.dest-map-place .dest-map-dist {
+  color: var(--dark);
+  font-weight: 700;
+}
+
+.dest-map-canvas {
+  width: 100%;
+  height: 320px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-300);
+  overflow: hidden;
+}
+
+.modal-box p.dest-map-hint,
+.modal-box p.dest-map-msg {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin: 8px 0 0;
+}
+
+.modal-box p.dest-map-msg {
+  font-size: 14px;
+  color: var(--gray-700);
+  margin-bottom: 14px;
+}
+
+.dest-map-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.modal-box .dest-map-actions .btn {
+  flex: 1;
+  margin-top: 0;
+  text-align: center;
+}
+
+.dest-map-label {
+  background: var(--white);
+  border: 2px solid var(--dark);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dest-map-label--office {
+  background: var(--yellow);
+}
+
+@media (max-width: 480px) {
+  .dest-map-canvas {
+    height: 260px;
+  }
+
+  .dest-map-actions {
+    flex-direction: column;
+  }
+}
