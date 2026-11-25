@@ -132,53 +132,47 @@
   font-weight: 700;
 }
 
-.game-dpad {
-  position: relative;
-  width: 150px;
-  height: 150px;
-  margin: 18px auto 0;
+.game-stage--block {
+  max-width: 400px;
+}
+
+.game-stage--block #gameCanvas {
+  aspect-ratio: 480 / 600;
+  background: #fffae8;
+}
+
+.game-pad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 6px;
+  gap: 8px;
+  max-width: 300px;
+  margin: 16px auto 0;
   touch-action: none;
 }
 
-.game-dpad__btn {
+.game-pad__btn {
+  height: 56px;
   border: 2px solid var(--dark);
   background: var(--white);
   border-radius: var(--radius-sm);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   user-select: none;
+  -webkit-user-select: none;
 }
 
-.game-dpad__btn:active {
+.game-pad__btn:active {
   background: var(--yellow);
 }
 
-.game-dpad__up {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.game-dpad__left {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.game-dpad__right {
-  grid-column: 3;
-  grid-row: 2;
-}
-
-.game-dpad__down {
-  grid-column: 2;
-  grid-row: 3;
+.game-pad__btn--drop {
+  grid-column: span 2;
+  font-size: 16px;
+  background: var(--yellow);
 }
 
 @media (min-width: 700px) {
-  .game-dpad {
+  .game-pad {
     display: none;
   }
 }

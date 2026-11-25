@@ -857,8 +857,11 @@ app.post("/api/song-requests", (req, res) => {
 // ---------- 미니게임 순위표 (전 직원 공유) ----------
 app.get("/api/game-scores", (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 10, 100);
+  // 게임별로 순위표를 따로 보여준다 (game 값이 없는 예전 기록은 "서울 도심 대탈출" 기록)
+  const game = String(req.query.game || "escape");
   const list = db
     .readList("game-scores")
+    .filter((r) => (r.game || "escape") === game)
     .sort((a, b) => b.score - a.score || a.id - b.id)
     .slice(0, limit);
   res.json(list);
@@ -866,12 +869,13 @@ app.get("/api/game-scores", (req, res) => {
 
 app.post("/api/game-scores", (req, res) => {
   const { name, score } = req.body;
+  const game = req.body.game === "block" ? "block" : "escape";
   const cleanName = String(name || "").trim().slice(0, 12);
   const cleanScore = Math.max(0, Math.floor(Number(score)));
   if (!cleanName || !Number.isFinite(cleanScore)) {
     return res.status(400).json({ error: "이름과 점수가 필요합니다." });
   }
-  const record = db.appendToList("game-scores", { name: cleanName, score: cleanScore });
+  const record = db.appendToList("game-scores", { name: cleanName, score: cleanScore, game });
   res.status(201).json(record);
 });
 

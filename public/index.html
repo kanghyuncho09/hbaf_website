@@ -140,7 +140,7 @@
       <a class="quick-card" href="#" data-view="game">
         <span class="quick-card__icon">🎮</span>
         <h3>미니게임</h3>
-        <p>서울 도심을 누비며 고양이 바프를 피하는 꿀벌 추격전! 실시간 순위표 도전</p>
+        <p>냥냥 블록 쌓기! 블록으로 줄을 채워 지우는 퍼즐, 실시간 순위표 도전</p>
       </a>
       <a class="quick-card" href="#" data-view="vet">
         <span class="quick-card__icon">🐱</span>
@@ -625,25 +625,26 @@
   <section class="view" id="view-game">
     <div class="container">
       <div class="page-header">
-        <h1>미니게임 · 서울 도심 대탈출</h1>
-        <p>사무실 고양이 바프가 바로 뒤까지 쫓아왔어요! 상하좌우로 자유롭게 움직이며 장애물을 피해 최대한 멀리 도망가세요. 갈수록 빨라지고 장애물도 거세집니다. 목숨은 3개!</p>
+        <h1>미니게임 · 냥냥 블록 쌓기</h1>
+        <p>바프·베프가 좋아하는 상자 블록이 떨어져요! 블록을 돌리고 옮겨서 가로 한 줄을 꽉 채우면 사라집니다. 줄을 지울수록 레벨이 오르고 빨라져요. 맨 위까지 쌓이면 끝!</p>
       </div>
 
       <div class="card game-card">
         <div class="game-scorebar">
-          <span>🐝 SCORE <strong id="gameScoreLabel">0</strong></span>
-          <span class="game-lives" id="gameLivesLabel">❤️❤️❤️</span>
+          <span>🐾 SCORE <strong id="gameScoreLabel">0</strong></span>
+          <span>LV <strong id="gameLevelLabel">1</strong></span>
           <span>🏆 BEST <strong id="gameHighLabel">0</strong></span>
+          <button type="button" class="game-icon-btn" id="gamePauseBtn" title="일시정지">⏸</button>
           <button type="button" class="game-icon-btn" id="gameMuteBtn" title="음악 켜기/끄기">🔊</button>
           <button type="button" class="game-icon-btn" id="gameLeaderboardBtn" title="순위표 보기">🏆 순위표</button>
         </div>
 
-        <div class="game-stage">
-          <canvas id="gameCanvas" width="800" height="360"></canvas>
+        <div class="game-stage game-stage--block">
+          <canvas id="gameCanvas" width="480" height="600"></canvas>
 
           <div class="game-overlay" id="gameStartOverlay">
-            <h2>서울 도심 대탈출!</h2>
-            <p>방향키/WASD (모바일은 아래 방향패드)로 상하좌우 이동, 장애물을 피해 최대한 오래 살아남으세요. 목숨은 3개입니다.</p>
+            <h2>냥냥 블록 쌓기 🐾</h2>
+            <p>← → 이동, ↑ 회전, ↓ 천천히, Space 바로 떨어뜨리기, P 일시정지.<br />모바일은 아래 버튼으로 조작하세요.</p>
             <div class="form-row game-name-row">
               <label for="gamePlayerName">이름</label>
               <input type="text" id="gamePlayerName" placeholder="홍길동" maxlength="12" required />
@@ -652,10 +653,10 @@
           </div>
 
           <div class="game-overlay" id="gameOverOverlay" hidden>
-            <h2>바프에게 잡혔다! 🐱</h2>
+            <h2>블록이 꽉 찼어요! 🐱</h2>
             <p><strong id="gameOverName"></strong>님의 점수: <strong id="gameFinalScore">0</strong> · 최고 점수: <strong id="gameFinalHigh">0</strong></p>
             <div class="game-leaderboard" id="gameLeaderboardInline"></div>
-            <button class="btn" id="gameRestartBtn">다시 도망가기</button>
+            <button class="btn" id="gameRestartBtn">다시 하기</button>
           </div>
 
           <div class="game-overlay" id="gameLeaderboardOverlay" hidden>
@@ -665,11 +666,12 @@
           </div>
         </div>
 
-        <div class="game-dpad" id="gameDpad">
-          <button type="button" class="game-dpad__btn game-dpad__up" data-dir="up">▲</button>
-          <button type="button" class="game-dpad__btn game-dpad__left" data-dir="left">◀</button>
-          <button type="button" class="game-dpad__btn game-dpad__right" data-dir="right">▶</button>
-          <button type="button" class="game-dpad__btn game-dpad__down" data-dir="down">▼</button>
+        <div class="game-pad" id="gamePad">
+          <button type="button" class="game-pad__btn" data-action="left" aria-label="왼쪽">◀</button>
+          <button type="button" class="game-pad__btn" data-action="rotate" aria-label="회전">⟳</button>
+          <button type="button" class="game-pad__btn" data-action="right" aria-label="오른쪽">▶</button>
+          <button type="button" class="game-pad__btn" data-action="down" aria-label="천천히 내리기">▼</button>
+          <button type="button" class="game-pad__btn game-pad__btn--drop" data-action="drop" aria-label="바로 떨어뜨리기">⤓ 드롭</button>
         </div>
       </div>
     </div>

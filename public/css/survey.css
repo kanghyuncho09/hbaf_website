@@ -255,3 +255,8 @@
 .survey-fab[hidden] {
   display: none;
 }
+
+/* 미니게임 화면에서는 조작 버튼을 가리지 않도록 숨긴다 */
+body:has(#view-game.active) .survey-fab {
+  display: none;
+}
