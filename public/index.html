@@ -374,7 +374,12 @@
             </div>
             <div class="form-row">
               <label for="vehDestination">목적지</label>
-              <input type="text" id="vehDestination" placeholder="거래처 방문 등" />
+              <input type="text" id="vehDestination" placeholder="장소 이름이나 주소 (예: 판교역)" autocomplete="off" />
+              <div class="route-preview" id="vehRoutePreview" hidden>
+                <div class="route-preview__summary" id="vehRouteSummary"></div>
+                <div class="route-preview__map" id="vehRouteMap"></div>
+                <div class="route-preview__cands" id="vehRouteCands"></div>
+              </div>
             </div>
             <button type="submit" class="btn" id="vehSubmitBtn">예약하기</button>
           </form>

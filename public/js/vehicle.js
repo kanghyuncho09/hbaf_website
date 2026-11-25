@@ -101,6 +101,8 @@
     document.getElementById("vehDurationText").textContent = formatDuration(start, end);
     document.getElementById("vehStartLabel").textContent = slider.minToLabel(start);
     document.getElementById("vehEndLabel").textContent = slider.minToLabel(end);
+    // 목적지 미니지도(kakao-map.js)가 출발 시각 기준으로 소요시간을 다시 계산하도록 알린다
+    document.dispatchEvent(new CustomEvent("vehicle:departure", { detail: { date: state.date, start: slider.minToLabel(start) } }));
 
     const statusEl = document.getElementById("vehSliderStatus");
     const submitBtn = document.getElementById("vehSubmitBtn");
@@ -515,6 +517,9 @@
       onSelect: (dateStr) => {
         state.date = dateStr;
         loadReservations();
+        document.dispatchEvent(
+          new CustomEvent("vehicle:departure", { detail: { date: state.date, start: slider.getSelection().start } })
+        );
       },
     });
     document.getElementById("vehSelectedVehicleLabel").textContent = VEHICLES[state.vehicle];

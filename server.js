@@ -557,6 +557,73 @@ app.get("/api/config/kakao", (req, res) => {
   res.json({ jsKey: process.env.KAKAO_JS_KEY || "" });
 });
 
+// ---------- 자동차 길찾기 (카카오모빌리티 길찾기 API) ----------
+// 회사 → 목적지까지 차로 몇 분 걸리는지 계산한다. REST API 키는 서버에서만 쓰는 비밀키라
+// KAKAO_REST_KEY 환경변수로 받고 브라우저에는 절대 내려보내지 않는다.
+// 출발 시각(dep=YYYYMMDDHHMM)이 미래면 그 시각 예상 교통으로, 아니면 현재 교통으로 계산.
+const OFFICE_COORD = { lng: 127.0364564, lat: 37.5228755 };
+const routeCache = new Map();
+
+app.get("/api/route", async (req, res) => {
+  const key = process.env.KAKAO_REST_KEY;
+  if (!key) return res.status(503).json({ error: "길찾기 기능이 아직 설정되지 않았어요." });
+  const lng = Number(req.query.lng);
+  const lat = Number(req.query.lat);
+  if (!Number.isFinite(lng) || !Number.isFinite(lat) || lng < 124 || lng > 132 || lat < 33 || lat > 39) {
+    return res.status(400).json({ error: "목적지 좌표가 올바르지 않습니다." });
+  }
+  let dep = String(req.query.dep || "");
+  // 지금보다 과거이거나 형식이 틀리면 실시간 교통으로 계산
+  const nowStr = kstDateStr(new Date()).replace(/-/g, "");
+  if (!/^\d{12}$/.test(dep) || dep.slice(0, 8) < nowStr) dep = "";
+
+  const cacheKey = `${lng.toFixed(5)},${lat.toFixed(5)},${dep}`;
+  const cached = routeCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < 10 * 60 * 1000) return res.json(cached.data);
+
+  const origin = `${OFFICE_COORD.lng},${OFFICE_COORD.lat}`;
+  const destination = `${lng},${lat}`;
+  const base = "https://apis-navi.kakaomobility.com/v1";
+  const url = dep
+    ? `${base}/future/directions?origin=${origin}&destination=${destination}&departure_time=${dep}&summary=false`
+    : `${base}/directions?origin=${origin}&destination=${destination}&summary=false`;
+
+  try {
+    const r = await fetch(url, { headers: { Authorization: `KakaoAK ${key}` } });
+    const json = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      console.log(`[길찾기] API 오류 ${r.status}: ${JSON.stringify(json).slice(0, 200)}`);
+      return res.status(502).json({ error: "길찾기 서버에서 응답을 받지 못했어요." });
+    }
+    const route = json.routes && json.routes[0];
+    if (!route || route.result_code !== 0) {
+      return res.status(404).json({ error: (route && route.result_msg) || "경로를 찾지 못했어요." });
+    }
+    // 지도에 그릴 경로 좌표 (너무 많으면 솎아서 보낸다)
+    const pts = [];
+    (route.sections || []).forEach((s) =>
+      (s.roads || []).forEach((rd) => {
+        for (let i = 0; i < rd.vertexes.length; i += 2) pts.push([rd.vertexes[i], rd.vertexes[i + 1]]);
+      })
+    );
+    const step = Math.max(1, Math.ceil(pts.length / 400));
+    const path = pts.filter((_, i) => i % step === 0 || i === pts.length - 1);
+    const data = {
+      durationSec: route.summary.duration,
+      distanceM: route.summary.distance,
+      tollFare: (route.summary.fare && route.summary.fare.toll) || 0,
+      departure: dep || null,
+      path,
+    };
+    routeCache.set(cacheKey, { at: Date.now(), data });
+    if (routeCache.size > 500) routeCache.delete(routeCache.keys().next().value);
+    res.json(data);
+  } catch (e) {
+    console.log(`[길찾기] 요청 실패: ${e.message}`);
+    res.status(502).json({ error: "길찾기 서버에 연결하지 못했어요." });
+  }
+});
+
 // 화면(달력, 예약)에서 쓰는 공휴일 목록. 코드에 적힌 기본값 + API에서 받은 값.
 app.get("/api/holidays", (req, res) => {
   res.json(HOLIDAY_NAMES);
