@@ -624,6 +624,75 @@ app.get("/api/route", async (req, res) => {
   }
 });
 
+// ---------- 오늘의 환율 (홈 화면) ----------
+// Frankfurter(유럽중앙은행 기준환율, 무료·키 없음)에서 최근 영업일 환율과 전일 대비 변동을
+// 받아온다. 실패하면 open.er-api.com(무료·키 없음) 최신값으로 대신한다(이때는 변동 표시 없음).
+// 은행 고시 매매기준율과는 조금 다를 수 있는 참고용 값이며, 1시간 동안 캐시한다.
+const FX_CURRENCIES = [
+  { code: "USD", unit: 1, label: "미국 달러", flag: "🇺🇸" },
+  { code: "JPY", unit: 100, label: "일본 엔", flag: "🇯🇵" },
+  { code: "EUR", unit: 1, label: "유로", flag: "🇪🇺" },
+  { code: "CNY", unit: 1, label: "중국 위안", flag: "🇨🇳" },
+];
+let fxCache = null;
+
+async function fetchFxFrankfurter() {
+  const from = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+  const symbols = FX_CURRENCIES.map((c) => c.code).join(",");
+  const r = await fetch(`https://api.frankfurter.dev/v1/${kstDateStr(from)}..?base=KRW&symbols=${symbols}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const json = await r.json();
+  const dates = Object.keys(json.rates || {}).sort();
+  if (!dates.length) throw new Error("no data");
+  const last = json.rates[dates[dates.length - 1]];
+  const prev = dates.length > 1 ? json.rates[dates[dates.length - 2]] : null;
+  return {
+    date: dates[dates.length - 1],
+    source: "유럽중앙은행(ECB) 기준환율",
+    rates: FX_CURRENCIES.map((c) => {
+      const krw = last[c.code] ? c.unit / last[c.code] : null;
+      const before = prev && prev[c.code] ? c.unit / prev[c.code] : null;
+      return { ...c, krw, change: krw != null && before != null ? krw - before : null };
+    }),
+  };
+}
+
+async function fetchFxFallback() {
+  const r = await fetch("https://open.er-api.com/v6/latest/KRW");
+  const json = await r.json();
+  if (json.result !== "success") throw new Error("fallback failed");
+  return {
+    date: kstDateStr(new Date(json.time_last_update_unix * 1000)),
+    source: "ExchangeRate-API",
+    rates: FX_CURRENCIES.map((c) => ({
+      ...c,
+      krw: json.rates[c.code] ? c.unit / json.rates[c.code] : null,
+      change: null,
+    })),
+  };
+}
+
+app.get("/api/exchange-rates", async (req, res) => {
+  if (fxCache && Date.now() - fxCache.at < 60 * 60 * 1000) return res.json(fxCache.data);
+  let data = null;
+  try {
+    data = await fetchFxFrankfurter();
+  } catch (e) {
+    console.log(`[환율] Frankfurter 실패, 대체 API 사용: ${e.message}`);
+    try {
+      data = await fetchFxFallback();
+    } catch (e2) {
+      console.log(`[환율] 대체 API도 실패: ${e2.message}`);
+    }
+  }
+  if (data) {
+    fxCache = { at: Date.now(), data };
+    return res.json(data);
+  }
+  if (fxCache) return res.json(fxCache.data); // 오래됐어도 마지막 값이라도 보여준다
+  res.status(502).json({ error: "환율 정보를 불러오지 못했어요." });
+});
+
 // 화면(달력, 예약)에서 쓰는 공휴일 목록. 코드에 적힌 기본값 + API에서 받은 값.
 app.get("/api/holidays", (req, res) => {
   res.json(HOLIDAY_NAMES);

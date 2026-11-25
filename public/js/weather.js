@@ -81,5 +81,42 @@
     }
   }
 
+  // 오늘의 환율 (서버 /api/exchange-rates가 무료 환율 API에서 받아 1시간씩 캐시)
+  async function loadFx() {
+    const el = document.getElementById("fxWidget");
+    if (!el) return;
+    try {
+      const res = await fetch("/api/exchange-rates");
+      if (!res.ok) return;
+      const data = await res.json();
+      const rows = data.rates
+        .filter((r) => r.krw != null)
+        .map((r) => {
+          let chg = "";
+          if (r.change != null) {
+            const c = Math.round(r.change * 100) / 100;
+            if (c > 0) chg = `<span class="fx__chg fx__chg--up">▲${c.toFixed(c < 10 ? 2 : 1)}</span>`;
+            else if (c < 0) chg = `<span class="fx__chg fx__chg--down">▼${Math.abs(c).toFixed(Math.abs(c) < 10 ? 2 : 1)}</span>`;
+            else chg = `<span class="fx__chg fx__chg--flat">-</span>`;
+          }
+          const value = r.krw.toLocaleString("ko-KR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          return `<div class="fx__row" title="${r.label} ${r.unit === 1 ? "" : r.unit}${r.code} = ${value}원">
+              <span class="fx__code">${r.code}${r.unit === 1 ? "" : " " + r.unit}</span>
+              <span><span class="fx__value">${value}</span> ${chg}</span>
+            </div>`;
+        })
+        .join("");
+      if (!rows) return;
+      const [, mo, da] = data.date.split("-");
+      el.innerHTML = `
+        <div class="fx__head"><span>💱 오늘의 환율 (원)</span><small title="${data.source} · 은행 고시 환율과 조금 다를 수 있어요">${Number(mo)}/${Number(da)} 기준 · 참고용</small></div>
+        <div class="fx__list">${rows}</div>`;
+      el.hidden = false;
+    } catch (e) {
+      // 환율은 부가 정보라 실패해도 조용히 숨겨둔다
+    }
+  }
+
   document.addEventListener("layout:ready", loadWeather);
+  document.addEventListener("layout:ready", loadFx);
 })();
