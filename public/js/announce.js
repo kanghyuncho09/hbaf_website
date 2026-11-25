@@ -4,24 +4,25 @@
 // 설문 팝업이 떠 있으면 그게 닫힌 뒤에 이어서 보여준다(팝업 두 개가 겹치지 않게).
 (function () {
   const ANNOUNCEMENT = {
-    id: "2026-11-vehicle-route-map",
+    id: "2026-11-vehicle-route-map-v2",
     tag: "🆕 새 기능",
     title: "법인차량 예약에 길찾기가 생겼어요!",
+    image: { src: "/assets/img/feature-route-map.png", alt: "목적지에 판교역을 입력하면 지도에 경로와 차로 약 45분 소요시간이 표시되는 실제 화면" },
     items: [
       {
         icon: "🗺️",
         title: "목적지만 입력하면 지도가 떠요",
-        desc: "예약할 때 목적지 칸에 장소 이름이나 주소(예: 판교역)를 입력하면, 바로 아래에 회사에서 목적지까지 경로가 지도로 그려져요.",
+        desc: "장소 이름이나 주소를 치면 회사→목적지 경로가 바로 그려져요.",
       },
       {
         icon: "🚗",
         title: "차로 몇 분 걸리는지 알려줘요",
-        desc: "예약한 대여 시각에 출발하는 기준으로 예상 소요시간, 거리, 통행료까지 계산해요. 시간을 바꾸면 다시 계산돼요.",
+        desc: "예약한 대여 시각 출발 기준으로 시간·거리·통행료를 계산해요.",
       },
       {
         icon: "📍",
         title: "다른 장소면 골라서 바꿀 수 있어요",
-        desc: "검색 결과가 원하는 곳이 아니면 지도 아래 후보 중에서 고르세요. 예약 현황의 '🗺️ 지도' 버튼으로 다른 사람의 목적지도 볼 수 있어요.",
+        desc: "지도 아래 후보 중에서 원하는 장소를 고르면 돼요.",
       },
     ],
     cta: { label: "법인차량 예약에서 써보기", view: "vehicle", focus: "vehDestination" },
@@ -50,6 +51,11 @@
           <button type="button" class="announce-close" id="announceCloseBtn" aria-label="닫기">✕</button>
           <span class="announce-tag">${ANNOUNCEMENT.tag}</span>
           <h2 id="announceTitle">${ANNOUNCEMENT.title}</h2>
+          ${
+            ANNOUNCEMENT.image
+              ? `<figure class="announce-shot"><img src="${ANNOUNCEMENT.image.src}" alt="${ANNOUNCEMENT.image.alt}" loading="lazy" /><figcaption>실제 화면 · 목적지에 "판교역"을 입력했을 때</figcaption></figure>`
+              : ""
+          }
           <ul class="announce-list">
             ${ANNOUNCEMENT.items
               .map(

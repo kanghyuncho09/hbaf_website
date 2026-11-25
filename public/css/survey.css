@@ -344,3 +344,42 @@ body:has(#view-game.active) .survey-fab {
   font-size: 13px;
   text-decoration: underline;
 }
+
+.announce-shot {
+  margin: 0 0 16px;
+}
+
+.announce-shot img {
+  width: 100%;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.announce-shot figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--gray-500);
+  text-align: center;
+}
+
+.announce-box .announce-list {
+  gap: 8px;
+}
+
+.announce-box .announce-list li {
+  padding: 9px 12px;
+}
+
+/* 노트북 화면에서도 버튼까지 스크롤 없이 보이도록 이미지 높이를 제한 */
+.announce-shot img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 230px;
+  margin: 0 auto;
+}
+
+.announce-box h2 {
+  margin-bottom: 10px;
+}
