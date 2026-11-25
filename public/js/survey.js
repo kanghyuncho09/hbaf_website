@@ -21,23 +21,34 @@
 
   function buildShell() {
     if (document.getElementById("surveyModal")) return;
-    const wrap = document.createElement("div");
-    wrap.innerHTML = `
-      <div class="modal-overlay survey-modal" id="surveyModal" hidden>
-        <div class="modal-box survey-box" role="dialog" aria-modal="true" aria-labelledby="surveyTitle">
-          <button type="button" class="survey-close" id="surveyCloseBtn" aria-label="닫기">✕</button>
-          <span class="survey-tag">📊 사내 설문</span>
-          <h2 id="surveyTitle">소회의실, 어떻게 쓸까요?</h2>
-          <p class="survey-desc">지금은 대회의실만 예약할 수 있어요. 소회의실도 예약 기능을 만들지, 아니면 지금처럼 비어 있으면 자유롭게 쓰는 방식으로 둘지 의견을 들려주세요.</p>
-          <div id="surveyBody"></div>
-        </div>
-      </div>
-      <button type="button" class="survey-fab" id="surveyFab" hidden>📊 소회의실 설문</button>`;
-    document.body.appendChild(wrap);
+    // 팝업 상자는 공용 배경(app.js의 getPopupHost) 안에 넣어서, 새 기능 안내 팝업과
+    // 동시에 떠도 나란히 보이게 한다.
+    const host = getPopupHost();
+    const box = document.createElement("div");
+    box.className = "modal-box survey-box";
+    box.id = "surveyModal";
+    box.hidden = true;
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-labelledby", "surveyTitle");
+    box.innerHTML = `
+      <button type="button" class="survey-close" id="surveyCloseBtn" aria-label="닫기">✕</button>
+      <span class="survey-tag">📊 사내 설문</span>
+      <h2 id="surveyTitle">소회의실, 어떻게 쓸까요?</h2>
+      <p class="survey-desc">지금은 대회의실만 예약할 수 있어요. 소회의실도 예약 기능을 만들지, 아니면 지금처럼 비어 있으면 자유롭게 쓰는 방식으로 둘지 의견을 들려주세요.</p>
+      <div id="surveyBody"></div>`;
+    host.prepend(box);
+
+    const fab = document.createElement("button");
+    fab.type = "button";
+    fab.className = "survey-fab";
+    fab.id = "surveyFab";
+    fab.hidden = true;
+    fab.textContent = "📊 소회의실 설문";
+    document.body.appendChild(fab);
 
     document.getElementById("surveyCloseBtn").addEventListener("click", closeLater);
-    document.getElementById("surveyModal").addEventListener("click", (e) => {
-      if (e.target.id === "surveyModal") closeLater();
+    host.addEventListener("popup:backdrop", () => {
+      if (!box.hidden) closeLater();
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !document.getElementById("surveyModal").hidden) closeLater();
@@ -168,10 +179,12 @@
     editing = false;
     render();
     document.getElementById("surveyModal").hidden = false;
+    syncPopupHost();
   }
 
   function close() {
     document.getElementById("surveyModal").hidden = true;
+    syncPopupHost();
   }
 
   function closeLater() {
@@ -203,23 +216,7 @@
     } catch (e) {}
     // 관리자 비밀번호로만 들어온 경우(직원 계정 없음)에는 자동 팝업을 띄우지 않는다.
     const staff = typeof getUserToken === "function" && !!getUserToken();
-    if (staff && !data.myVote && !later) openWhenFree();
-  }
-
-  // 새 기능 안내 팝업(announce.js)이 떠 있으면 그게 닫힌 뒤에 연다 (팝업 두 개가 겹치지 않게)
-  function openWhenFree() {
-    const other = document.getElementById("announceModal");
-    if (other && !other.hidden) {
-      const obs = new MutationObserver(() => {
-        if (other.hidden) {
-          obs.disconnect();
-          setTimeout(open, 300);
-        }
-      });
-      obs.observe(other, { attributes: true, attributeFilter: ["hidden"] });
-      return;
-    }
-    open();
+    if (staff && !data.myVote && !later) open();
   }
 
   document.addEventListener("layout:ready", () => load(true));

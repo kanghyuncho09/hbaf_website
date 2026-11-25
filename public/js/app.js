@@ -195,6 +195,32 @@ function localDateStr(d) {
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
 }
 
+/* ---------- 팝업 묶음 (설문 + 새 기능 안내를 한 화면에 같이 띄우기) ----------
+   각 팝업(.modal-box)은 이 공용 배경(popupHost) 안에 들어가고, 하나라도 열려 있으면
+   배경이 보인다. 데스크톱에서는 나란히, 휴대폰에서는 위아래로 쌓여서 보인다. */
+function getPopupHost() {
+  let host = document.getElementById("popupHost");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "popupHost";
+    host.className = "modal-overlay popup-host";
+    host.hidden = true;
+    // 바깥 어두운 영역을 누르면 열린 팝업들에게 "닫아도 돼" 신호를 보낸다
+    host.addEventListener("click", (e) => {
+      if (e.target === host) host.dispatchEvent(new Event("popup:backdrop"));
+    });
+    document.body.appendChild(host);
+  }
+  return host;
+}
+
+function syncPopupHost() {
+  const host = getPopupHost();
+  const open = [...host.children].filter((c) => !c.hidden).length;
+  host.hidden = open === 0;
+  host.classList.toggle("is-multi", open > 1);
+}
+
 // 서버가 공휴일 API에서 받아둔 목록(대체·임시공휴일 포함)을 위 HOLIDAYS에 합친다.
 // 서버가 응답이 없어도 화면이 늦게 뜨지 않도록 최대 3초만 기다린다.
 async function loadServerHolidays() {

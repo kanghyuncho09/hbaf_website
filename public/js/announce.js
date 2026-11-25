@@ -1,7 +1,7 @@
 // 새 기능 안내 팝업. 사이트에 들어오면 한 번 뜨고, "확인했어요"나 "써보러 가기"를 누르면
 // 이 브라우저에서는 다시 뜨지 않는다. 다음에 새 기능을 알릴 때는 ANNOUNCEMENT.id만 바꾸고
 // 내용을 고치면 모든 직원에게 다시 한 번 뜬다.
-// 설문 팝업이 떠 있으면 그게 닫힌 뒤에 이어서 보여준다(팝업 두 개가 겹치지 않게).
+// 설문 팝업과 같은 배경 안에 나란히 뜬다(데스크톱은 좌우, 휴대폰은 위아래).
 (function () {
   const ANNOUNCEMENT = {
     id: "2026-11-vehicle-route-map-v2",
@@ -44,10 +44,13 @@
   }
 
   function build() {
-    const wrap = document.createElement("div");
-    wrap.innerHTML = `
-      <div class="modal-overlay announce-modal" id="announceModal" hidden>
-        <div class="modal-box announce-box" role="dialog" aria-modal="true" aria-labelledby="announceTitle">
+    const modal = document.createElement("div");
+    modal.className = "modal-box announce-box";
+    modal.id = "announceModal";
+    modal.hidden = true;
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-labelledby", "announceTitle");
+    modal.innerHTML = `
           <button type="button" class="announce-close" id="announceCloseBtn" aria-label="닫기">✕</button>
           <span class="announce-tag">${ANNOUNCEMENT.tag}</span>
           <h2 id="announceTitle">${ANNOUNCEMENT.title}</h2>
@@ -68,20 +71,20 @@
               .join("")}
           </ul>
           <button type="button" class="btn" id="announceCtaBtn">${ANNOUNCEMENT.cta.label}</button>
-          <button type="button" class="announce-later" id="announceOkBtn">확인했어요</button>
-        </div>
-      </div>`;
-    document.body.appendChild(wrap.firstElementChild);
-    const modal = document.getElementById("announceModal");
+          <button type="button" class="announce-later" id="announceOkBtn">확인했어요</button>`;
+    // 설문 팝업과 같은 공용 배경(app.js의 getPopupHost) 안에 넣어서 동시에 나란히 뜨게 한다
+    const host = getPopupHost();
+    host.appendChild(modal);
 
     const close = () => {
       markSeen();
       modal.hidden = true;
+      syncPopupHost();
     };
     document.getElementById("announceCloseBtn").addEventListener("click", close);
     document.getElementById("announceOkBtn").addEventListener("click", close);
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) close();
+    host.addEventListener("popup:backdrop", () => {
+      if (!modal.hidden) close();
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !modal.hidden) close();
@@ -102,21 +105,9 @@
 
   function show() {
     if (alreadySeen()) return;
-    const survey = document.getElementById("surveyModal");
-    if (survey && !survey.hidden) {
-      // 설문 팝업이 닫히면 이어서 보여준다
-      const obs = new MutationObserver(() => {
-        if (survey.hidden) {
-          obs.disconnect();
-          setTimeout(show, 300);
-        }
-      });
-      obs.observe(survey, { attributes: true, attributeFilter: ["hidden"] });
-      return;
-    }
     (document.getElementById("announceModal") || build()).hidden = false;
+    syncPopupHost();
   }
 
-  // 설문 팝업이 먼저 뜰 수 있도록(서버 응답 대기) 잠깐 기다렸다가 확인한다
-  document.addEventListener("layout:ready", () => setTimeout(show, 1200));
+  document.addEventListener("layout:ready", () => setTimeout(show, 600));
 })();

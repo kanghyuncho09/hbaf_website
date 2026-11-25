@@ -383,3 +383,35 @@ body:has(#view-game.active) .survey-fab {
 .announce-box h2 {
   margin-bottom: 10px;
 }
+
+/* ---------- 팝업 묶음: 설문 + 새 기능 안내를 한 배경에 같이 띄우기 ---------- */
+.popup-host {
+  gap: 20px;
+  flex-wrap: wrap;
+  align-content: center;
+  overflow-y: auto;
+}
+
+.popup-host > .modal-box[hidden] {
+  display: none;
+}
+
+.popup-host > .modal-box {
+  flex: 0 1 460px;
+}
+
+/* 두 개가 같이 떠 있는데 나란히 들어가지 않는 화면(휴대폰·좁은 창)에서는 위아래로 쌓고 배경을 스크롤 */
+@media (max-width: 980px) {
+  .popup-host.is-multi {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .popup-host.is-multi > .modal-box {
+    flex: 0 0 auto;
+    max-height: none;
+    overflow: visible;
+  }
+}
