@@ -195,7 +195,21 @@ function localDateStr(d) {
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
 }
 
-function startApp() {
+// 서버가 공휴일 API에서 받아둔 목록(대체·임시공휴일 포함)을 위 HOLIDAYS에 합친다.
+// 서버가 응답이 없어도 화면이 늦게 뜨지 않도록 최대 3초만 기다린다.
+async function loadServerHolidays() {
+  try {
+    const res = await Promise.race([
+      fetch("/api/holidays"),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000)),
+    ]);
+    if (!res.ok) return;
+    Object.assign(HOLIDAYS, await res.json());
+  } catch (e) {}
+}
+
+async function startApp() {
+  await loadServerHolidays();
   const requested = new URLSearchParams(location.search).get("view");
   navigateTo(requested && document.getElementById("view-" + requested) ? requested : "home");
   loadCleanupPreview();

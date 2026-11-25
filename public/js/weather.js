@@ -41,10 +41,43 @@
           <div class="weather__location">📍 ${OFFICE_LOCATION_LABEL}</div>
           <div class="weather__temp">${Math.round(cur.temperature_2m)}°C</div>
           <div class="weather__label">${info.label} · 습도 ${cur.relative_humidity_2m}%</div>
+          <div class="weather__air" id="airQuality"></div>
         </div>
       `;
+      loadAirQuality();
     } catch (err) {
       el.innerHTML = `<div class="weather__label">날씨 정보를 불러오지 못했습니다.</div>`;
+    }
+  }
+
+  // 미세먼지 등급은 환경부(에어코리아) 기준 (단위 ㎍/㎥)
+  function dustGrade(value, cuts) {
+    if (value == null || Number.isNaN(value)) return null;
+    const grades = [
+      { label: "좋음", cls: "good" },
+      { label: "보통", cls: "normal" },
+      { label: "나쁨", cls: "bad" },
+      { label: "매우나쁨", cls: "worst" },
+    ];
+    const idx = cuts.findIndex((c) => value <= c);
+    return grades[idx === -1 ? 3 : idx];
+  }
+
+  async function loadAirQuality() {
+    const el = document.getElementById("airQuality");
+    if (!el) return;
+    try {
+      const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${OFFICE_LAT}&longitude=${OFFICE_LON}&current=pm10,pm2_5&timezone=Asia%2FSeoul`;
+      const res = await fetch(url);
+      const cur = (await res.json()).current || {};
+      const pm10 = dustGrade(cur.pm10, [30, 80, 150]);
+      const pm25 = dustGrade(cur.pm2_5, [15, 35, 75]);
+      if (!pm10 && !pm25) return;
+      const chip = (name, g, v) =>
+        g ? `<span class="air-chip air-chip--${g.cls}" title="${Math.round(v)}㎍/㎥">${name} ${g.label}</span>` : "";
+      el.innerHTML = chip("미세먼지", pm10, cur.pm10) + chip("초미세먼지", pm25, cur.pm2_5);
+    } catch (e) {
+      // 미세먼지는 부가 정보라 못 불러와도 조용히 넘어간다
     }
   }
 

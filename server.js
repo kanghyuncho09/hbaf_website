@@ -487,6 +487,75 @@ ensureRecurringMeetings();
 setInterval(purgeOldReservations, 30 * 60 * 1000);
 setInterval(ensureRecurringMeetings, 60 * 60 * 1000);
 
+// ---------- 공휴일 자동 불러오기 (한국천문연구원 특일 정보, 공공데이터포털) ----------
+// 위 HOLIDAYS 목록은 그대로 기본값으로 두고, HOLIDAY_API_KEY 환경변수가 있으면 올해·내년
+// 공휴일을 API에서 받아 합친다(대체공휴일·임시공휴일 포함). 받은 결과는 data/holidays.json에
+// 저장해두기 때문에 API가 잠깐 안 돼도 마지막으로 받은 목록을 계속 쓴다. 하루 한 번 갱신.
+const HOLIDAY_NAMES = {};
+db.ensureFile("holidays", { updatedAt: null, items: {} });
+
+function applyHolidayItems(items) {
+  Object.entries(items || {}).forEach(([date, name]) => {
+    HOLIDAYS.add(date);
+    HOLIDAY_NAMES[date] = name;
+  });
+}
+applyHolidayItems(db.readJSON("holidays").items);
+
+async function fetchHolidayMonth(key, year, month) {
+  const url =
+    "https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo" +
+    `?serviceKey=${encodeURIComponent(key)}&solYear=${year}&solMonth=${String(month).padStart(2, "0")}&_type=json&numOfRows=50`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const body = json && json.response && json.response.body;
+  if (!body) throw new Error("unexpected response");
+  let items = body.items && body.items.item;
+  if (!items) return [];
+  if (!Array.isArray(items)) items = [items];
+  return items
+    .filter((it) => it.isHoliday === "Y")
+    .map((it) => {
+      const s = String(it.locdate);
+      return { date: `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`, name: it.dateName };
+    });
+}
+
+async function syncHolidays() {
+  const key = process.env.HOLIDAY_API_KEY;
+  if (!key) return;
+  const year = Number(kstDateStr(new Date()).slice(0, 4));
+  const items = {};
+  try {
+    for (const y of [year, year + 1]) {
+      for (let m = 1; m <= 12; m++) {
+        (await fetchHolidayMonth(key, y, m)).forEach((h) => {
+          items[h.date] = h.name;
+        });
+      }
+    }
+  } catch (e) {
+    console.log(`[공휴일] API 불러오기 실패 — 저장된 목록을 계속 사용: ${e.message}`);
+    return;
+  }
+  db.writeJSON("holidays", { updatedAt: new Date().toISOString(), items });
+  applyHolidayItems(items);
+  // 새로 알게 된 공휴일에 이미 자동 생성된 정기 회의가 있으면 치운다 (관리자가 직접 고친 건 둔다)
+  const list = db.readList("meeting-reservations");
+  const kept = list.filter((r) => !(r.recurring && !r.customized && HOLIDAYS.has(r.date)));
+  if (kept.length !== list.length) db.writeJSON("meeting-reservations", kept);
+  console.log(`[공휴일] ${Object.keys(items).length}개 불러옴 (${year}~${year + 1})`);
+}
+
+syncHolidays();
+setInterval(syncHolidays, 24 * 60 * 60 * 1000);
+
+// 화면(달력, 예약)에서 쓰는 공휴일 목록. 코드에 적힌 기본값 + API에서 받은 값.
+app.get("/api/holidays", (req, res) => {
+  res.json(HOLIDAY_NAMES);
+});
+
 // ---------- 회의실 예약 ----------
 app.get("/api/meeting-reservations", (req, res) => {
   res.json(purgeMeetingReservationsAndArchive());
