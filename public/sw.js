@@ -1,4 +1,4 @@
-const CACHE_NAME = "hbaf-portal-v4";
+const CACHE_NAME = "hbaf-portal-v5";
 const APP_SHELL = [
   "/",
   "/css/base.css",
@@ -9,6 +9,7 @@ const APP_SHELL = [
   "/css/vet.css",
   "/css/suggestions.css",
   "/css/auth.css",
+  "/css/survey.css",
   "/js/auth.js",
   "/js/app.js",
   "/js/weather.js",
@@ -20,6 +21,7 @@ const APP_SHELL = [
   "/js/vet.js",
   "/js/suggestions.js",
   "/js/admin-users.js",
+  "/js/survey.js",
   "/assets/img/logo.png",
 ];
 

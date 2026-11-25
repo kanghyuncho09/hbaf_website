@@ -1,0 +1,257 @@
+/* ---------- 설문 팝업 (소회의실 예약 기능 여부) ---------- */
+.survey-box {
+  position: relative;
+  max-width: 460px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  text-align: left;
+}
+
+.survey-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  font-size: 14px;
+}
+
+.survey-tag {
+  display: inline-block;
+  background: var(--yellow);
+  color: var(--dark);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.survey-box h2 {
+  text-align: left;
+  font-size: 21px;
+  margin: 0 0 8px;
+}
+
+.modal-box p.survey-desc {
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.survey-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.survey-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.survey-option__card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.survey-option__card:hover {
+  border-color: var(--yellow-dark);
+}
+
+.survey-option input:checked + .survey-option__card {
+  border-color: var(--yellow);
+  background: var(--cream);
+}
+
+.survey-option input:focus-visible + .survey-option__card {
+  outline: 2px solid var(--dark);
+  outline-offset: 2px;
+}
+
+.survey-option__icon {
+  font-size: 26px;
+}
+
+.survey-option__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.survey-option__text strong {
+  font-size: 15px;
+}
+
+.survey-option__text small {
+  color: var(--gray-500);
+  font-size: 12.5px;
+}
+
+.survey-comment-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.survey-form textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+.modal-box p.survey-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 6px 0 0;
+  min-height: 0;
+}
+
+.survey-later {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border: none;
+  background: none;
+  color: var(--gray-500);
+  font-size: 13px;
+  text-decoration: underline;
+}
+
+.modal-box p.survey-thanks {
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.survey-result {
+  margin-bottom: 14px;
+}
+
+.survey-result__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.survey-result__head em {
+  font-style: normal;
+  font-size: 11px;
+  background: var(--dark);
+  color: var(--white);
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.survey-result__head small {
+  color: var(--gray-500);
+  font-weight: 400;
+}
+
+.survey-result__bar {
+  height: 12px;
+  background: var(--gray-100);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.survey-result__bar span {
+  display: block;
+  height: 100%;
+  background: var(--gray-300);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.survey-result.is-mine .survey-result__bar span {
+  background: var(--yellow);
+}
+
+.survey-admin {
+  border-top: 1px solid var(--gray-300);
+  margin: 18px 0 8px;
+  padding-top: 14px;
+}
+
+.survey-admin h3 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.survey-admin h3 small {
+  color: var(--gray-500);
+  font-weight: 400;
+}
+
+.survey-admin ul {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.survey-admin li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 13px;
+}
+
+.survey-admin__who {
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.survey-admin__pick {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--gray-100);
+}
+
+.survey-admin__pick--reserve {
+  background: var(--yellow);
+}
+
+.modal-box .survey-admin li p {
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+
+.modal-box p.survey-admin-empty {
+  color: var(--gray-500);
+}
+
+.survey-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 150;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: var(--dark);
+  color: var(--yellow);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.survey-fab[hidden] {
+  display: none;
+}

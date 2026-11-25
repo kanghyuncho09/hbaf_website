@@ -146,6 +146,7 @@ db.ensureFile("free-posts", [
 db.ensureFile("game-scores", []);
 db.ensureFile("vet-records", []);
 db.ensureFile("suggestions", []);
+db.ensureFile("survey-small-room", []);
 db.ensureFile("users", []);
 db.ensureFile("updates", [
   {
@@ -924,6 +925,51 @@ app.post("/api/suggestions", (req, res) => {
 app.delete("/api/suggestions/:id", requireAdmin, (req, res) => {
   const ok = db.removeFromList("suggestions", req.params.id);
   res.status(ok ? 200 : 404).json({ ok });
+});
+
+// ---------- 설문: 소회의실 예약 기능을 만들지 / 유동적으로 둘지 ----------
+// 한 사람당 한 표(아이디 기준). 다시 제출하면 기존 표를 바꾼다. 집계는 누구나 볼 수
+// 있고, 누가 어떤 의견을 냈는지(이름/코멘트)는 관리자에게만 보여준다.
+const SMALL_ROOM_CHOICES = ["reserve", "flexible"];
+
+function smallRoomSurveySummary(req) {
+  const votes = db.readList("survey-small-room");
+  const counts = { reserve: 0, flexible: 0 };
+  votes.forEach((v) => {
+    if (counts[v.choice] !== undefined) counts[v.choice] += 1;
+  });
+  const mine = votes.find((v) => v.username === req.user.username);
+  const adminPayload = verifyToken(req.headers["x-admin-token"]);
+  const isAdminReq = !!(adminPayload && adminPayload.role === "admin");
+  return {
+    counts,
+    total: votes.length,
+    myVote: mine ? { choice: mine.choice, comment: mine.comment || "" } : null,
+    votes: isAdminReq
+      ? votes
+          .map(({ name, choice, comment, updatedAt, createdAt }) => ({ name, choice, comment, at: updatedAt || createdAt }))
+          .sort((a, b) => String(b.at).localeCompare(String(a.at)))
+      : undefined,
+  };
+}
+
+app.get("/api/survey/small-room", (req, res) => {
+  res.json(smallRoomSurveySummary(req));
+});
+
+app.post("/api/survey/small-room", (req, res) => {
+  const choice = String(req.body.choice || "");
+  if (!SMALL_ROOM_CHOICES.includes(choice)) {
+    return res.status(400).json({ error: "선택지를 골라주세요." });
+  }
+  const comment = String(req.body.comment || "").trim().slice(0, 200);
+  const existing = db.readList("survey-small-room").find((v) => v.username === req.user.username);
+  if (existing) {
+    db.updateInList("survey-small-room", existing.id, { choice, comment, name: req.user.name });
+  } else {
+    db.appendToList("survey-small-room", { username: req.user.username, name: req.user.name, choice, comment });
+  }
+  res.json(smallRoomSurveySummary(req));
 });
 
 // ---------- 업데이트 소식 (관리자가 작성, 홈화면에 공지) ----------
