@@ -260,3 +260,87 @@
 body:has(#view-game.active) .survey-fab {
   display: none;
 }
+
+/* ---------- 새 기능 안내 팝업 (announce.js) ---------- */
+.announce-box {
+  position: relative;
+  max-width: 460px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  text-align: left;
+}
+
+.announce-box h2 {
+  text-align: left;
+  font-size: 21px;
+  margin: 0 0 14px;
+  padding-right: 32px;
+}
+
+.announce-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  font-size: 14px;
+}
+
+.announce-tag {
+  display: inline-block;
+  background: var(--dark);
+  color: var(--yellow);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.announce-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.announce-list li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--cream);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.announce-list__icon {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.announce-list strong {
+  font-size: 14.5px;
+}
+
+.modal-box .announce-list p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+.announce-later {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border: none;
+  background: none;
+  color: var(--gray-500);
+  font-size: 13px;
+  text-decoration: underline;
+}

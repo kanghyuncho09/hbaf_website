@@ -203,7 +203,23 @@
     } catch (e) {}
     // 관리자 비밀번호로만 들어온 경우(직원 계정 없음)에는 자동 팝업을 띄우지 않는다.
     const staff = typeof getUserToken === "function" && !!getUserToken();
-    if (staff && !data.myVote && !later) open();
+    if (staff && !data.myVote && !later) openWhenFree();
+  }
+
+  // 새 기능 안내 팝업(announce.js)이 떠 있으면 그게 닫힌 뒤에 연다 (팝업 두 개가 겹치지 않게)
+  function openWhenFree() {
+    const other = document.getElementById("announceModal");
+    if (other && !other.hidden) {
+      const obs = new MutationObserver(() => {
+        if (other.hidden) {
+          obs.disconnect();
+          setTimeout(open, 300);
+        }
+      });
+      obs.observe(other, { attributes: true, attributeFilter: ["hidden"] });
+      return;
+    }
+    open();
   }
 
   document.addEventListener("layout:ready", () => load(true));
