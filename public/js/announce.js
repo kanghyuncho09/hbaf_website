@@ -104,7 +104,9 @@
   }
 
   function show() {
-    if (alreadySeen()) return;
+    // 강제 노출 기간(app.js의 POPUP_FORCE_UNTIL)에는 이미 봤어도 접속할 때마다 띄운다
+    const forced = typeof popupsForced === "function" && popupsForced();
+    if (!forced && alreadySeen()) return;
     (document.getElementById("announceModal") || build()).hidden = false;
     syncPopupHost();
   }

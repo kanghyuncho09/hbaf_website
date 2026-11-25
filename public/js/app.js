@@ -214,6 +214,15 @@ function getPopupHost() {
   return host;
 }
 
+// 이 날짜 "전날"까지는 설문·새 기능 안내 팝업을, 이미 투표했거나 이미 봤더라도 접속할
+// 때마다 무조건 띄운다 (2026-11-25부터 1주일, 12/1까지). 이 날짜가 지나면 자동으로 원래
+// 방식(설문은 미참여자만, 안내는 한 번만)으로 돌아간다.
+const POPUP_FORCE_UNTIL = "2026-12-02";
+
+function popupsForced() {
+  return localDateStr() < POPUP_FORCE_UNTIL;
+}
+
 function syncPopupHost() {
   const host = getPopupHost();
   const open = [...host.children].filter((c) => !c.hidden).length;

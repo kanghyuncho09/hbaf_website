@@ -216,7 +216,10 @@
     } catch (e) {}
     // 관리자 비밀번호로만 들어온 경우(직원 계정 없음)에는 자동 팝업을 띄우지 않는다.
     const staff = typeof getUserToken === "function" && !!getUserToken();
-    if (staff && !data.myVote && !later) open();
+    // 강제 노출 기간(app.js의 POPUP_FORCE_UNTIL)에는 투표 여부와 상관없이 접속할 때마다 연다.
+    // 이미 투표한 사람에게는 결과 화면이 보인다.
+    const forced = typeof popupsForced === "function" && popupsForced();
+    if (forced || (staff && !data.myVote && !later)) open();
   }
 
   document.addEventListener("layout:ready", () => load(true));
