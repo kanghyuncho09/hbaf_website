@@ -1,0 +1,650 @@
+/* =====================================================================
+   TOSS 스타일 — 기능 페이지별 디자인 (회의실·차량·게시판·게임·병원기록·건의함)
+   기능/동작은 그대로 두고 모양만 바꾼다. toss.css 다음에 로드.
+   ===================================================================== */
+
+/* ---------- 페이지 제목: 3D 이모지 아이콘 타일 + 큰 제목 ---------- */
+.view:not(#view-home) .page-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 16px;
+  align-items: center;
+  padding: 40px 0 28px;
+}
+
+.view:not(#view-home) .page-header::before {
+  content: "";
+  grid-row: span 2;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  background: #fff center / 40px no-repeat;
+}
+
+.view:not(#view-home) .page-header h1 {
+  margin: 0 0 4px;
+  align-self: end;
+}
+
+.view:not(#view-home) .page-header p {
+  margin: 0;
+  align-self: start;
+}
+
+.view#view-meeting-room .page-header::before { background-image: url("https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Spiral%20calendar/3D/spiral_calendar_3d.png"); background-color: #e8f3ff; }
+.view#view-vehicle .page-header::before { background-image: url("https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Automobile/3D/automobile_3d.png"); background-color: #e5f8f1; }
+.view#view-board .page-header::before { background-image: url("https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pushpin/3D/pushpin_3d.png"); background-color: #fff3e0; }
+.view#view-game .page-header::before { background-image: url("https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Video%20game/3D/video_game_3d.png"); background-color: #f3eaff; }
+.view#view-vet .page-header::before { background-image: url("https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grinning%20cat/3D/grinning_cat_3d.png"); background-color: #ffeef0; }
+.view#view-suggestions .page-header::before { background-image: url("https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Light%20bulb/3D/light_bulb_3d.png"); background-color: #fff8db; }
+.view#view-admin-users .page-header::before { background-image: url("https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bust%20in%20silhouette/3D/bust_in_silhouette_3d.png"); background-color: #f2f4f6; }
+
+@media (max-width: 640px) {
+  .view:not(#view-home) .page-header::before { width: 48px; height: 48px; border-radius: 14px; background-size: 32px; }
+  .page-header h1 { font-size: 22px; }
+}
+
+/* 카드 안 소제목 */
+.panel-head h2,
+.reservation-list h2,
+.log-form h2,
+.board-layout h2,
+.vet-cal-head h2 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* 리스트 안 작은 텍스트 버튼(수정/삭제) → 회색 칩 */
+.edit-btn,
+.menu-list button,
+.post-admin-actions button,
+.res-actions button {
+  text-decoration: none !important;
+  background: var(--grey-100) !important;
+  color: var(--grey-600) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  transition: background 0.15s;
+}
+
+.edit-btn:hover,
+.menu-list button:hover,
+.post-admin-actions button:hover,
+.res-actions button:hover {
+  background: var(--grey-200) !important;
+  color: var(--grey-900) !important;
+}
+
+/* ===================== 회의실 · 차량 공통 예약 패널 ===================== */
+.meeting-room-photo-card {
+  padding: 12px !important;
+}
+
+.meeting-room-photo-wrap {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.meeting-room-photo {
+  max-height: 320px;
+}
+
+.meeting-room-caption {
+  font-size: 13px;
+  color: var(--grey-500);
+  margin: 12px 0 4px;
+}
+
+/* 날짜 선택 */
+.date-picker__trigger {
+  border: 1.5px solid transparent;
+  background: var(--grey-100);
+  border-radius: 12px;
+  padding: 13px 14px;
+  font-size: 15px;
+  color: var(--grey-900);
+  position: relative;
+}
+
+.date-picker__trigger::after {
+  content: "›";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  color: var(--grey-500);
+  font-size: 18px;
+}
+
+.date-picker__trigger:hover {
+  background: var(--grey-200);
+}
+
+.date-picker__pop {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.14);
+  padding: 18px;
+  width: 300px;
+}
+
+.date-picker__head h3 {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.dp-cell {
+  border-radius: 10px !important;
+  font-weight: 600;
+}
+
+/* 시간 슬라이더 */
+.time-slider__duration {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.time-slider__track {
+  height: 8px;
+  background: var(--grey-200);
+}
+
+.time-slider__segment--past {
+  background: var(--grey-300) !important;
+}
+
+.time-slider__segment--booked {
+  background: #ffc2c8 !important;
+}
+
+.time-slider__handle {
+  width: 28px;
+  height: 28px;
+  background: #fff;
+  border: 6px solid var(--blue);
+  box-shadow: 0 2px 8px rgba(49, 130, 246, 0.35);
+}
+
+.time-slider__handle::after {
+  background: var(--grey-800);
+  border-radius: 8px;
+  padding: 5px 9px;
+  bottom: 26px;
+}
+
+/* 시작/종료 시각 말풍선이 겹치지 않게 바깥쪽으로 */
+[id$="HandleStart"]::after { transform: translateX(-88%); }
+[id$="HandleEnd"]::after { transform: translateX(-12%); }
+
+.time-slider__labels {
+  color: var(--grey-500);
+  font-weight: 500;
+}
+
+.time-slider__legend {
+  color: var(--grey-600);
+}
+
+.time-slider__legend-dot.is-booked {
+  background: #ffc2c8 !important;
+}
+
+.time-slider__status {
+  background: #e5f8f1;
+  color: #0f9d6f;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+}
+
+.time-slider__status.is-warning {
+  background: #ffeef0;
+  color: #e42939;
+}
+
+.time-slider__row {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--grey-100);
+}
+
+.time-slider__row-label {
+  color: var(--grey-600);
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.time-slider__row-value {
+  color: var(--grey-900);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+/* 예약하기 버튼: 토스식 넓은 하단 버튼 */
+.reservation-form > .btn,
+.reservation-form button[type="submit"],
+.log-form button[type="submit"],
+.vet-form button[type="submit"] {
+  width: 100%;
+  padding: 16px 22px;
+  font-size: 16px;
+  border-radius: 16px;
+  margin-top: 8px;
+}
+
+/* 예약 현황 목록 → 둥근 회색 행 */
+.reservation-items li,
+.log-list li {
+  background: var(--grey-50);
+  border: none;
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 8px;
+}
+
+.reservation-items li:last-child,
+.log-list li:last-child {
+  margin-bottom: 0;
+}
+
+.reservation-items .r-time {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--grey-900);
+}
+
+.reservation-items .r-meta,
+.log-list .log-body {
+  color: var(--grey-600);
+}
+
+.log-list .log-head {
+  font-weight: 700;
+  color: var(--grey-900);
+  margin-bottom: 4px;
+}
+
+/* ===================== 법인차량 ===================== */
+.vehicle-dept-notice {
+  background: var(--blue-soft);
+  border: none;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 14px;
+  color: var(--blue-dark);
+}
+
+.vehicle-unlogged-banner {
+  background: #ffeef0;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 18px;
+  color: #e42939;
+}
+
+.vehicle-grid {
+  gap: 12px !important;
+}
+
+.vehicle-card {
+  border: 2px solid transparent;
+  border-radius: 24px;
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.vehicle-card:hover {
+  transform: translateY(-2px);
+}
+
+.vehicle-card.active {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px rgba(49, 130, 246, 0.12);
+}
+
+.vehicle-card__photo-wrap {
+  background: var(--grey-50);
+}
+
+.vehicle-card__body {
+  padding: 18px 20px 20px !important;
+}
+
+.vehicle-card h3 {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.vehicle-card .plate {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--grey-500);
+}
+
+.vehicle-card__dept {
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--grey-600);
+}
+
+.route-preview {
+  border: none;
+  background: var(--grey-50);
+  border-radius: 16px;
+}
+
+.route-preview__time b {
+  color: var(--blue);
+}
+
+.dest-map-btn {
+  border-radius: 10px !important;
+}
+
+.log-form .required-note {
+  color: #e42939;
+}
+
+/* ===================== 팝업 공통 ===================== */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(2px);
+}
+
+.modal-box {
+  padding: 28px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2) !important;
+}
+
+.modal-box h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* ===================== 공지 게시판 ===================== */
+.cleaning-subtitle {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 28px 0 10px;
+}
+
+.cleaning-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--grey-200);
+}
+
+.cleaning-table th,
+.cleaning-table td {
+  border: none;
+  border-bottom: 1px solid var(--grey-100);
+  padding: 16px;
+  font-size: 15px;
+}
+
+.cleaning-table tr:last-child td {
+  border-bottom: none;
+}
+
+.cleaning-table th {
+  background: var(--grey-50);
+  color: var(--grey-500);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cleaning-table td:first-child {
+  background: transparent;
+  color: var(--grey-700);
+  font-weight: 600;
+}
+
+.cleaning-table td:not(:first-child) {
+  font-weight: 700;
+  color: var(--grey-900);
+}
+
+.cleaning-table tr.is-current-week td,
+.cleaning-table tr.is-current-week td:first-child {
+  background: var(--blue-soft);
+  color: var(--blue-dark);
+}
+
+.cleaning-note {
+  color: var(--grey-500);
+}
+
+/* 게시글 */
+.post-list li {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--grey-100);
+}
+
+.post-list .post-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--grey-900);
+}
+
+.post-list .post-meta {
+  color: var(--grey-500);
+  font-size: 13px;
+}
+
+.post-list .post-content {
+  color: var(--grey-700);
+  line-height: 1.65;
+}
+
+/* 점심 룰렛 */
+.roulette-pointer {
+  font-size: 28px;
+}
+
+.roulette-result {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--blue);
+  letter-spacing: -0.02em;
+}
+
+.menu-list li {
+  padding: 14px 4px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.menu-form input {
+  border: 1.5px solid transparent;
+  background: var(--grey-100);
+  border-radius: 12px;
+  padding: 13px 14px;
+  font-size: 15px;
+}
+
+.menu-form input:focus {
+  outline: none;
+  border-color: var(--blue);
+  background: #fff;
+}
+
+/* ===================== 미니게임 ===================== */
+.game-scorebar {
+  gap: 8px !important;
+  flex-wrap: wrap;
+}
+
+.game-scorebar > * {
+  background: var(--grey-100);
+  border-radius: 10px;
+  padding: 6px 12px;
+}
+
+.game-scorebar strong {
+  color: var(--blue);
+}
+
+.game-leaderboard {
+  border-radius: 20px;
+}
+
+.game-leaderboard td {
+  border-bottom: 1px solid var(--grey-100) !important;
+  padding: 12px 10px !important;
+}
+
+.game-leaderboard tr.is-me {
+  background: var(--blue-soft);
+}
+
+.game-overlay h2 {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.game-name-row input {
+  border: 1.5px solid transparent !important;
+  background: var(--grey-100) !important;
+  border-radius: 12px !important;
+}
+
+/* ===================== 바프/베프 병원 기록 ===================== */
+.vet-cal-head .btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+.vet-cal-weekdays {
+  color: var(--grey-500);
+  font-weight: 600;
+}
+
+.vet-cal-grid {
+  gap: 6px !important;
+}
+
+.vet-cal-cell {
+  border: 1.5px solid transparent;
+  background: var(--grey-50);
+  border-radius: 14px;
+  color: var(--grey-800);
+  transition: background 0.15s var(--ease);
+}
+
+.vet-cal-cell:not(.is-empty):hover {
+  background: var(--grey-100);
+}
+
+.vet-cal-cell.is-empty {
+  background: transparent;
+}
+
+.vet-cal-cell.is-today .vet-cal-daynum {
+  display: inline-grid;
+  place-items: center;
+  align-self: center;
+  min-width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--grey-900);
+  color: #fff;
+}
+
+.vet-cal-cell.is-today {
+  border-color: transparent;
+}
+
+.vet-cal-cell.is-selected {
+  background: var(--blue-soft);
+  border-color: var(--blue);
+  color: var(--blue-dark);
+}
+
+.vet-cal-preview__item {
+  background: var(--blue);
+  color: #fff;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-weight: 600;
+}
+
+.vet-record-cat {
+  background: var(--blue-soft);
+  color: var(--blue);
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+/* ===================== 기능 건의함 ===================== */
+.suggestion-preview__card {
+  background: #fff;
+  border: none;
+}
+
+.sticky-wall {
+  gap: 14px;
+}
+
+.sticky-note {
+  font-family: "Pretendard Variable", Pretendard, sans-serif;
+  border-radius: 20px;
+  box-shadow: none;
+  transform: none !important;
+  padding: 20px 18px 16px;
+  transition: transform 0.2s var(--ease);
+}
+
+.sticky-note:hover {
+  transform: translateY(-3px) !important;
+}
+
+.sticky-note::before {
+  display: none;
+}
+
+.sticky-note--y0 { background: #fff8db; }
+.sticky-note--y1 { background: #fff0e0; }
+.sticky-note--y2 { background: #e5f8f1; }
+.sticky-note--y3 { background: #e8f3ff; }
+.sticky-note--y4 { background: #ffeef0; }
+
+.sticky-note__content {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--grey-900);
+}
+
+.sticky-note__meta {
+  color: var(--grey-500);
+  font-size: 12px;
+}
+
+.sticky-note--mini {
+  border-radius: 16px;
+}
+
+/* ===================== 설문 · 공지 팝업 ===================== */
+.survey-option__card {
+  background: var(--grey-50);
+  border-color: transparent;
+}
+
+.survey-tag,
+.survey-admin__pick--reserve {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.announce-list li {
+  background: var(--grey-50) !important;
+  border-radius: 16px;
+}

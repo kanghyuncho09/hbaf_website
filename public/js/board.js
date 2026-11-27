@@ -286,7 +286,7 @@
       return;
     }
     const sliceAngle = (2 * Math.PI) / n;
-    const colors = ["#ffc700", "#212121"];
+    const colors = ["#3182f6", "#e8f3ff"];
 
     ctx.clearRect(0, 0, size, size);
 
@@ -305,7 +305,7 @@
       ctx.rotate(start + sliceAngle / 2);
       ctx.textAlign = "right";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = colors[i % colors.length] === "#212121" ? "#ffffff" : "#212121";
+      ctx.fillStyle = colors[i % colors.length] === "#3182f6" ? "#ffffff" : "#191f28";
       ctx.font = "bold 14px 'Noto Sans KR', sans-serif";
       ctx.fillText(item.name, radius - 14, 0);
       ctx.restore();
