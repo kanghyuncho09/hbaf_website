@@ -18,7 +18,7 @@
   })();
 </script>
 <link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#ffc700" />
+<meta name="theme-color" content="#ffffff" />
 <link rel="icon" href="/assets/img/logo.png" type="image/png" />
 <link rel="apple-touch-icon" href="/assets/img/logo.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="/css/suggestions.css" />
 <link rel="stylesheet" href="/css/auth.css" />
 <link rel="stylesheet" href="/css/survey.css" />
+<link rel="stylesheet" href="/css/toss.css" />
 </head>
 <body>
 <div class="auth-gate" id="authGate">
@@ -106,24 +107,41 @@
 <main id="mainContent" hidden>
   <!-- ================= 홈 ================= -->
   <section class="view active" id="view-home">
-    <section class="hero">
-      <div class="container hero__banner">
-        <div class="hero__inner">
-          <div class="hero__text">
-            <p class="hero__eyebrow">HBAF INTRANET</p>
-            <h1>오늘도 좋은 하루,<br />필요한 업무는 여기서 한 번에</h1>
-            <p class="hero__desc">회의실·법인차량 예약부터 공지사항, 자유게시판까지<br />사내 공용업무를 위한 포털입니다.</p>
+    <section class="container home-top">
+      <div class="greet">
+        <p class="greet__date" id="homeDate"></p>
+        <h1 class="greet__title" id="homeGreeting">오늘도 좋은 하루 보내세요</h1>
+      </div>
+
+      <div class="home-hero-grid">
+        <a class="promo-banner" href="#" data-view="meeting-room">
+          <div class="promo-banner__text">
+            <p class="promo-banner__eyebrow">HBAF 사내 포털</p>
+            <h2>필요한 업무는<br />여기서 한 번에</h2>
+            <p class="promo-banner__desc">회의실·법인차량 예약부터 공지사항까지</p>
+            <span class="promo-banner__cta">회의실 예약하기 ›</span>
           </div>
-          <div class="hero__side">
-            <div class="weather" id="weatherWidget">
-              <div class="weather__label">날씨 불러오는 중...</div>
-            </div>
-            <div class="fx" id="fxWidget" hidden></div>
+          <!-- 바프·베프를 3D 이모지로 (Microsoft Fluent Emoji, MIT) -->
+          <div class="promo-banner__art" aria-hidden="true">
+            <img class="art-cat art-cat--a" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Grinning%20cat/3D/grinning_cat_3d.png" alt="" />
+            <img class="art-cat art-cat--b" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Smiling%20cat%20with%20heart-eyes/3D/smiling_cat_with_heart-eyes_3d.png" alt="" />
+            <img class="art-deco art-deco--paw" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Paw%20prints/3D/paw_prints_3d.png" alt="" />
+            <img class="art-deco art-deco--heart" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Growing%20heart/3D/growing_heart_3d.png" alt="" />
+            <img class="art-deco art-deco--spark" src="https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sparkles/3D/sparkles_3d.png" alt="" />
           </div>
+        </a>
+        <div class="hero__side">
+          <div class="weather" id="weatherWidget">
+            <div class="weather__label">날씨 불러오는 중...</div>
+          </div>
+          <div class="fx" id="fxWidget" hidden></div>
         </div>
       </div>
     </section>
 
+    <div class="container section-title">
+      <h2>바로가기</h2>
+    </div>
     <section class="container quick-links">
       <a class="quick-card" href="#" data-view="meeting-room">
         <span class="quick-card__icon">🗓️</span>
@@ -814,6 +832,7 @@
 
 <script src="/js/auth.js"></script>
 <script src="/js/app.js"></script>
+<script src="/js/home-greeting.js"></script>
 <script src="/js/weather.js"></script>
 <script src="/js/date-picker.js"></script>
 <script src="/js/time-slider.js"></script>
