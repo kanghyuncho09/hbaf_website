@@ -12,6 +12,7 @@ const APP_SHELL = [
   "/css/survey.css",
   "/css/toss.css",
   "/css/toss-pages.css",
+  "/css/toss-layout.css",
   "/js/auth.js",
   "/js/app.js",
   "/js/weather.js",

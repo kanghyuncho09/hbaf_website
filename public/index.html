@@ -35,6 +35,7 @@
 <link rel="stylesheet" href="/css/survey.css" />
 <link rel="stylesheet" href="/css/toss.css" />
 <link rel="stylesheet" href="/css/toss-pages.css" />
+<link rel="stylesheet" href="/css/toss-layout.css" />
 </head>
 <body>
 <div class="auth-gate" id="authGate">
@@ -94,10 +95,10 @@
       <a href="#" data-view="meeting-room">회의실 예약</a>
       <a href="#" data-view="vehicle">법인차량 예약</a>
       <a href="#" data-view="board">공지 게시판</a>
-      <a href="#" data-view="game">🎮 미니게임</a>
-      <a href="#" data-view="vet">🐱 바프/베프 병원 기록</a>
-      <a href="#" data-view="suggestions">💡 기능 건의함</a>
-      <a href="#" data-view="admin-users" id="adminUsersNavLink" style="display:none;">👤 가입 승인</a>
+      <a href="#" data-view="game">미니게임</a>
+      <a href="#" data-view="vet">바프/베프 병원 기록</a>
+      <a href="#" data-view="suggestions">기능 건의함</a>
+      <a href="#" data-view="admin-users" id="adminUsersNavLink" style="display:none;">가입 승인</a>
       <a href="#" id="adminToggle" class="admin-toggle">🔒 관리자</a>
       <span class="user-greeting" id="userGreeting"></span>
       <a href="#" id="userLogoutBtn" class="user-logout">로그아웃</a>
@@ -171,32 +172,22 @@
       </a>
     </section>
 
-    <section class="container notice-preview">
-      <div class="card">
+    <div class="container section-title">
+      <h2>사내 소식</h2>
+    </div>
+    <section class="container home-board suggestion-preview">
+      <div class="card home-board__cleaning">
         <div class="notice-preview__head">
           <h2>이번 주 청소 담당</h2>
           <a href="#" class="btn btn--sm btn--outline" data-view="board" data-subtab="cleaning">전체 보기</a>
         </div>
         <div id="cleanupPreview" class="cleanup-preview">불러오는 중...</div>
       </div>
-    </section>
 
-    <section class="container suggestion-preview home-bottom-grid">
-      <div class="card suggestion-preview__card">
+      <div class="card home-board__updates">
         <div class="notice-preview__head">
           <div>
-            <h2>💡 기능 건의함</h2>
-            <p class="panel-sub">추가하고 싶은 기능을 스티커 메모로 자유롭게 남겨주세요</p>
-          </div>
-          <a href="#" class="btn btn--sm btn--outline" data-view="suggestions">전체 보기</a>
-        </div>
-        <div id="suggestionPreview" class="sticky-preview-wall">불러오는 중...</div>
-      </div>
-
-      <div class="card">
-        <div class="notice-preview__head">
-          <div>
-            <h2>📢 업데이트 소식</h2>
+            <h2>업데이트 소식</h2>
             <p class="panel-sub">포털이 업데이트될 때마다 여기서 알려드려요</p>
           </div>
         </div>
@@ -205,6 +196,17 @@
           <button type="submit" class="btn btn--sm">소식 등록</button>
         </form>
         <ul id="updateList" class="post-list update-list">불러오는 중...</ul>
+      </div>
+
+      <div class="card suggestion-preview__card home-board__suggest">
+        <div class="notice-preview__head">
+          <div>
+            <h2>기능 건의함</h2>
+            <p class="panel-sub">추가하고 싶은 기능을 스티커 메모로 자유롭게 남겨주세요</p>
+          </div>
+          <a href="#" class="btn btn--sm btn--outline" data-view="suggestions">전체 보기</a>
+        </div>
+        <div id="suggestionPreview" class="sticky-preview-wall">불러오는 중...</div>
       </div>
     </section>
   </section>
@@ -215,14 +217,6 @@
       <div class="page-header">
         <h1>회의실 예약</h1>
         <p>원형회의실 · 08:00 ~ 17:00, 10분 단위로 예약할 수 있습니다.</p>
-      </div>
-
-      <div class="card meeting-room-photo-card">
-        <div class="meeting-room-photo-wrap">
-          <img src="/assets/img/meeting-room.png" alt="원형회의실 실제 모습" class="meeting-room-photo" />
-          <span class="tag tag--available meeting-room-badge" id="mrStatusBadge">이용 가능</span>
-        </div>
-        <p class="meeting-room-caption">📍 원형회의실 실제 모습</p>
       </div>
 
       <div class="reservation-layout">
@@ -292,10 +286,20 @@
           </form>
         </section>
 
-        <section class="card reservation-list">
-          <h2>오늘의 예약 현황</h2>
-          <ul id="mrReservationList" class="reservation-items"></ul>
-        </section>
+        <aside class="reservation-side">
+          <div class="card meeting-room-photo-card">
+            <div class="meeting-room-photo-wrap">
+              <img src="/assets/img/meeting-room.png" alt="원형회의실 실제 모습" class="meeting-room-photo" />
+              <span class="tag tag--available meeting-room-badge" id="mrStatusBadge">이용 가능</span>
+            </div>
+            <p class="meeting-room-caption">📍 원형회의실 실제 모습</p>
+          </div>
+
+            <section class="card reservation-list">
+              <h2>오늘의 예약 현황</h2>
+              <ul id="mrReservationList" class="reservation-items"></ul>
+            </section>
+        </aside>
       </div>
     </div>
   </section>
